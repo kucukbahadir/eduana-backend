@@ -53,7 +53,7 @@ The Eduana Project is an educational management platform designed to support mul
 
 1. Clone the repository:
    ```sh
-   git clone <github.com/kucukbahadir/eduana-backend>
+   git clone github.com/kucukbahadir/eduana-backend
    cd <repository_folder>
    ```
 2. Create a PostgreSQL database:
