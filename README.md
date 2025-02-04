@@ -1,3 +1,91 @@
 # eduana-backend
 
 The Eduana Project is an educational management platform designed to support multiple user roles: Parents, Kids, Teachers, Coordinators, and Admins. The platform provides tools for managing lessons, tracking progress, facilitating classroom activities, and supporting interactive learning experiences such as coding lessons.
+
+# Database Documentation
+
+## Schema and Relationships
+
+### Tables:
+
+1. **user**
+
+   - Stores information about users (students, teachers, admins, etc.).
+   - Each user has a unique role defined in the `role_type` enum.
+   - Relationships:
+     - A teacher **teaches** multiple classes.
+     - A student **enrolled\_in** multiple classes.
+
+2. **class**
+
+   - Represents a group of students taught by a teacher.
+   - Relationships:
+     - A teacher **teaches** a class.
+     - A class has multiple students **enrolled\_in** it.
+
+3. **lesson**
+
+   - Represents individual lessons scheduled for a class.
+   - Relationships:
+     - Each lesson belongs to a `class`.
+     - Each lesson is assigned to a `teacher`.
+
+4. **attendance**
+
+   - Tracks student attendance for each lesson.
+   - Relationships:
+     - Links a `lesson` and a `student`.
+
+5. **announcement**
+
+   - Stores class-related announcements.
+   - Relationships:
+     - Each announcement is associated with a `class`.
+
+## Installation Instructions
+
+### Prerequisites
+
+- PostgreSQL 12+
+- psql command-line tool
+
+### Steps to Install
+
+1. Clone the repository:
+   ```sh
+   git clone <repository_url>
+   cd <repository_folder>
+   ```
+2. Create a PostgreSQL database:
+   ```sql
+   CREATE DATABASE eduana_db;
+   ```
+3. Connect to the database:
+   ```sh
+   psql -d eduana_db
+   ```
+4. Execute the SQL dump file to create tables:
+   ```sh
+   psql -d eduana_db -f database_dump.sql
+   ```
+
+### Environment Variables
+
+Ensure that your application has access to the following environment variables:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=eduana_db
+DB_USER=your_username
+DB_PASSWORD=your_password
+```
+
+## Usage
+
+After setting up the database, you can connect to it using any PostgreSQL client&#x20;
+
+## ER Diagram
+
+Refer to `ERD_eduana.png` for a visual representation of the database schema.
+
