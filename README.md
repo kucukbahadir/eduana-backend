@@ -53,20 +53,20 @@ The Eduana Project is an educational management platform designed to support mul
 
 1. Clone the repository:
    ```sh
-   git clone <repository_url>
+   git clone <github.com/kucukbahadir/eduana-backend>
    cd <repository_folder>
    ```
 2. Create a PostgreSQL database:
    ```sql
-   CREATE DATABASE eduana_db;
+   CREATE DATABASE eduana_front;
    ```
 3. Connect to the database:
    ```sh
-   psql -d eduana_db
+   psql -d eduana_front
    ```
 4. Execute the SQL dump file to create tables:
    ```sh
-   psql -d eduana_db -f database_dump.sql
+   psql -d eduana_front -f eduana_front.sql
    ```
 
 ### Environment Variables
@@ -76,7 +76,7 @@ Ensure that your application has access to the following environment variables:
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=eduana_db
+DB_NAME=eduana_front
 DB_USER=your_username
 DB_PASSWORD=your_password
 ```
