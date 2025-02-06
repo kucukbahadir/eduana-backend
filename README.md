@@ -89,3 +89,41 @@ After setting up the database, you can connect to it using any PostgreSQL client
 
 Refer to `ERD_eduana.png` for a visual representation of the database schema.
 
+# Health Check
+The application includes a health check endpoint to verify server status.
+
+### Endpoint
+- URL: `http://localhost:3000/api/health`
+- Method: GET
+- Response: JSON object with server status and timestamp
+
+### Response Format
+```json
+{
+    "status": "healthy",
+    "timestamp": "2025-02-06T11:17:35.178Z",
+    "server": "running"
+}
+```
+
+### Testing the Endpoint
+Choose one of these methods to test the health check:
+
+#### Using Browser
+1. Open your web browser
+2. Navigate to `http://localhost:3000/api/health`
+
+#### Using PowerShell
+```powershell
+Invoke-WebRequest -Uri http://localhost:3000/api/health
+```
+
+#### Using cURL
+```bash
+curl http://localhost:3000/api/health
+```
+
+### Expected Response
+- Status Code: 200 OK
+- Content-Type: application/json
+- The response indicates the server is running and accepting requests
