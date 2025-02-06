@@ -2,7 +2,22 @@
 
 The Eduana Project is an educational management platform designed to support multiple user roles: Parents, Kids, Teachers, Coordinators, and Admins. The platform provides tools for managing lessons, tracking progress, facilitating classroom activities, and supporting interactive learning experiences such as coding lessons.
 
-# Database Documentation
+## Table of Contents
+1. [Database Documentation](#database-documentation)
+   - [Schema and Relationships](#schema-and-relationships)
+   - [Tables](#tables)
+2. [Installation Instructions](#installation-instructions)
+   - [Prerequisites](#prerequisites)
+   - [Steps to Install](#steps-to-install)
+   - [Environment Variables](#environment-variables)
+3. [Usage](#usage)
+4. [ER Diagram](#er-diagram)
+5. [Health Check](#health-check)
+   - [Endpoint](#endpoint)
+   - [Response Format](#response-format)
+   - [Testing the Endpoint](#testing-the-endpoint)
+
+# Database
 
 ## Schema and Relationships
 
