@@ -14,7 +14,51 @@ datasource db {
 }
 
 model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password_hash String
+  role          Role
+  created_at    DateTime
+  updated_at    DateTime
+}
+
+model class {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  created_at DateTime
+  updated_at DateTime
+}
+
+model lesson {
+  id             Int      @id @default(autoincrement())
+  class          Class    @relation(fields: [classId], references: [id])
+  classId        Int
+  teacher_id     User     @relation(fields: [teacherId], references: [id])
+  teacherId      Int
+  scheduled_time DateTime
+  notes          Text
+  created_at     DateTime
+  updated_at     DateTime
+}
+
+model attendence {
+  id         Int      @id @default(autoincrement())
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
+  lessonId   int
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  int
+  present    Boolean
+  created_at DateTime
+  updated_at DateTime
+}
+
+model announcement {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    Text
+  class      Class    @relation(fields: [classId], references: [id])
+  classId    Int
+  created_at DateTime
+  updated_at DateTime
 }
