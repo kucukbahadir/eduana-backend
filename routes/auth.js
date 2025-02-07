@@ -1,14 +1,14 @@
-import express from 'express';
-import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
-
-const router = express.Router();
-const prisma = new PrismaClient();
-
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, email, role } = req.body;
+    console.log('Registration attempt with data:', {
+      username: req.body.username,
+      email: req.body.email,
+      role: req.body.role,
+      password: '***hidden***'
+    });
 
+    const { username, password, email, role } = req.body;
+    
     // Input validation
     if (!username || !password || !email || !role) {
       return res.status(400).json({
@@ -35,7 +35,8 @@ router.post('/register', async (req, res) => {
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
-
+    console.log('Existing user check result:', existingUser ? 'User exists' : 'User does not exist');
+    
     if (existingUser) {
       return res.status(400).json({
         message: 'Email already exists'
@@ -45,6 +46,7 @@ router.post('/register', async (req, res) => {
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+    console.log('Password hashed successfully');
 
     // Create user
     const newUser = await prisma.user.create({
@@ -54,6 +56,12 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         role
       }
+    });
+    console.log('New user created with data:', {
+      id: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role
     });
 
     res.status(201).json({
@@ -66,11 +74,9 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ 
-      message: 'Internal server error' 
+    console.error('Registration error:', error);
+    res.status(500).json({
+      message: 'Internal server error'
     });
   }
 });
-
-export default router;
