@@ -1,0 +1,60 @@
+{
+    "database": "public",
+    "types": {
+      "role_type": ["ADMIN", "TEACHER", "STUDENT", "PARENT", "COORDINATOR"]
+    },
+    "tables": {
+      "announcement": {
+        "columns": {
+          "id": {"type": "integer", "primary_key": true, "auto_increment": true},
+          "title": {"type": "varchar(200)", "not_null": true},
+          "content": {"type": "text", "not_null": true},
+          "class_id": {"type": "integer", "foreign_key": "class.id"},
+          "created_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true},
+          "updated_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true}
+        }
+      },
+      "attendance": {
+        "columns": {
+          "id": {"type": "integer", "primary_key": true, "auto_increment": true},
+          "lesson_id": {"type": "integer", "foreign_key": "lesson.id"},
+          "student_id": {"type": "integer", "foreign_key": "user.id"},
+          "present": {"type": "boolean", "default": false, "not_null": true},
+          "created_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true},
+          "updated_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true}
+        }
+      },
+      "class": {
+        "columns": {
+          "id": {"type": "integer", "primary_key": true, "auto_increment": true},
+          "name": {"type": "varchar(100)", "not_null": true},
+          "teacher_id": {"type": "integer", "foreign_key": "user.id"},
+          "created_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true},
+          "updated_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true}
+        }
+      },
+      "lesson": {
+        "columns": {
+          "id": {"type": "integer", "primary_key": true, "auto_increment": true},
+          "class_id": {"type": "integer", "foreign_key": "class.id"},
+          "teacher_id": {"type": "integer", "foreign_key": "user.id"},
+          "scheduled_time": {"type": "timestamp", "not_null": true},
+          "notes": {"type": "text"},
+          "created_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true},
+          "updated_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true}
+        }
+      },
+      "user": {
+        "columns": {
+          "id": {"type": "integer", "primary_key": true, "auto_increment": true},
+          "username": {"type": "varchar(50)", "not_null": true, "unique": true},
+          "email": {"type": "varchar(100)", "not_null": true, "unique": true},
+          "password_hash": {"type": "varchar(255)", "not_null": true},
+          "role": {"type": "role_type", "default": "STUDENT", "not_null": true},
+          "created_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true},
+          "updated_at": {"type": "timestamp", "default": "CURRENT_TIMESTAMP", "not_null": true}
+        }
+      }
+    }
+  }
+  
