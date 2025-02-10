@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 class User {
     constructor(id, username, email, role, createdAt, updatedAt) {
@@ -15,7 +15,7 @@ class User {
             user: 'postgres',
             host: 'localhost',
             database: 'eduana',
-            password: '',
+            password: 'Heat001#',   // Change this to your password
             port: 5432,
         });
 
@@ -36,4 +36,4 @@ class User {
     }
 }
 
-module.exports = User;
+export default User;
