@@ -5,6 +5,6 @@ const adminRouter = require('./routes/adminRoutes');
 const app = express();
 app.use(express.json());
 app.use('/api', healthCheckerRouter);
-app.use('/admin', adminRouter)
+app.use('/api/admin', adminRouter)
 
 module.exports = app;
