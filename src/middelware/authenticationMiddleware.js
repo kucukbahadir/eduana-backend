@@ -19,9 +19,9 @@ function verifyJwtToken(token) {
 }
 
 /**
- * Middleware for token-based authentication.
- * If the token is valid, the user object is attached to the request.
- * Otherwise, a 401 Unauthorized response is returned.
+ * Middleware for token-based authentication and admin authorization.
+ * If the token is valid and the user is an admin, the user object is attached to the request.
+ * Otherwise, a 401 Unauthorized or 403 Forbidden response is returned.
  *
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
@@ -34,23 +34,30 @@ async function handleTokenBasedAuthentication(req, res, next) {
         return res.status(401).json({ message: "Unauthorized: No token provided" });
     }
 
-    const jwtToken = verifyJwtToken(authenticationToken);
+    const jwtToken = verifyJwtToken(authenticationToken.replace("Bearer ", ""));
     if (!jwtToken) {
         return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
     try {
-        // Retrieve user with related cart and address using Prisma
+        // Retrieve user using Prisma with the userId from the JWT token
         const user = await prisma.user.findUnique({
-            where: { userid: jwtToken.userId }
+            where: { id: jwtToken.userId }
         });
 
         if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
         }
 
+        // Attach the user object to the request
         req.user = user;
-        next();
+
+        // Check if the user is an admin
+        if (user.role !== 'ADMIN') {
+            return res.status(403).json({ message: "Forbidden: Admins only" });
+        }
+
+        next();  // Continue to the next middleware/controller
     } catch (error) {
         console.error("Prisma Database Error:", error.message);
         res.status(500).json({ message: "Internal Server Error" });
