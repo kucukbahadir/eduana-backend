@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
 
 router.post('/reset-password/', async (req, res) => {
     try {
@@ -81,18 +83,37 @@ router.post('/reset-password/', async (req, res) => {
     }
 });
 
-router.get('/update-password/:token', (req, res) => {
-    const { token } = req.params;
+router.post('/update-password/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
 
-    if (!token) {
-        return res.status(400).json({ message: 'Token is required' });
+        if (!password) return res.status(400).json({ message: 'Password is required' }); // incomplete as password requirements are unknown
+        if (!token) return res.status(400).json({ message: 'Token is required' });
+
+        const user = await prisma.user.findFirst({
+            where: { resetToken: token }
+        })
+        if (!user) return res.status(404).json({ message: 'Token not found' });
+        if (new Date() > user.resetTokenExpiry) res.status(400).json({ message: 'Token expired' });
+
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        await prisma.user.update({
+            where: {
+                email: user.email
+            },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        })
+
+        return res.status(200).json({ message: 'Password changed succesfully' });
+    } catch (error) {
+        console.error('Update password error: ', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-
-    return res.status(200).json({ message: `Token inputted: ${token}` });
-
-    // TODO: verify reset token
-    
-    // TODO: update user password
 });
 
 module.exports = router;
