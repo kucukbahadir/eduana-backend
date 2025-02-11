@@ -1,7 +1,10 @@
-import AdminService from '../sevices/adminService';
-const express = require('express');
-const router = express.Router();
+const AdminService = require("../services/adminService"); // Use require
 
-const adminService = new AdminService
+class AdminController {
+    changeUserRole(req, res) {
+        AdminService.changeUserRole(req, res); // Call the function
+        console.log("User role changed.");
+    }
+}
 
-router.post('/role', (req, res) => adminService.changeUserRole(req ,res));
+module.exports = new AdminController(); // Use module.exports instead of export default
