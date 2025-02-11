@@ -1,3 +1,10 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
 router.post('/register', async (req, res) => {
   try {
     console.log('Registration attempt with data:', {
@@ -80,3 +87,5 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
+module.exports = router;

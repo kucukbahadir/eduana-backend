@@ -1,14 +1,14 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-export const adminAuthMiddleware = async (req, res, next) => {
+const adminAuthMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
-      return res.status(401).json({ 
-        message: 'Authentication required' 
+      return res.status(401).json({
+        message: 'Authentication required'
       });
     }
 
@@ -20,8 +20,8 @@ export const adminAuthMiddleware = async (req, res, next) => {
     });
 
     if (!user || user.role !== 'admin') {
-      return res.status(403).json({ 
-        message: 'Admin privileges required' 
+      return res.status(403).json({
+        message: 'Admin privileges required'
       });
     }
 
@@ -29,8 +29,10 @@ export const adminAuthMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ 
-      message: 'Internal server error' 
+    res.status(500).json({
+      message: 'Internal server error'
     });
   }
 };
+
+module.exports = adminAuthMiddleware;
