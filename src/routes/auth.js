@@ -1,6 +1,7 @@
-import express from 'express';
-import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -73,4 +74,4 @@ router.post('/register', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
