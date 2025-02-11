@@ -1,8 +1,7 @@
-const express = require('express');
-const authRoutes = require('./routes/auth.js');
-const adminAuthMiddleware = require('./middleware/adminAuth.js');
-const healthCheckerRouter = require('./routes/healthchecker');
-module.exports = app;
+import express from 'express';
+import authRoutes from './routes/auth.js';
+import adminAuthMiddleware from './middleware/adminAuth.js';
+import healthCheckerRouter from './routes/healthchecker';
 
 const app = express();
 
