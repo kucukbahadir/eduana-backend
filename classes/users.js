@@ -17,8 +17,8 @@ class User {
         const pool = new Pool({
             user: 'postgres',
             host: 'localhost',
-            database: 'eduana', // Change this to your database
-            password: 'Heat001#',   // Change this to your password
+            database: 'eduana', 
+            password: 'Heat001#',   
             port: 5432,
         });
 
