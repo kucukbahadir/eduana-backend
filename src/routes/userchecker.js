@@ -13,10 +13,21 @@ const router = express.Router(); // Create a new router object
 // Define a route to get the details of the current user
 router.get('/users/me', async (req, res) => {
     try {
-        const secretKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey'; // Use a default key if the environment variable is not set
-        const testToken = jwt.sign({ userId: 1 }, secretKey, { expiresIn: '1h' });
-        console.log("Test JWT Token:", testToken);
-        const userId = await getUserIdByToken(testToken); // Get the user ID from the token
+    // Create a JWT token for testing purposes
+    // uncomment to test
+    // const testUserId = 1;
+    // const hushKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey';
+    //const testToken = jwt.sign({ userId: testUserId }, hushKey, { expiresIn: '1h' });
+    //console.log(`Test JWT Token: ${testToken}`);
+    //req.headers.authorization = `Bearer ${testToken}`;
+        
+        const token = req.headers.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null;
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided or token is malformed' });
+        }
+        const secretKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey'; // Use the environment variable or a default key
+        const decodedToken = jwt.verify(token, secretKey); // Verify the token and decode it
+        const userId = decodedToken.userId; // Get the user ID from the decoded token
         const user = await User.fetchUserDetails(userId); // Fetch the user details using the user ID
         res.json(user); // Send the user details as a JSON response
     } catch (err) {

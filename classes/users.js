@@ -17,14 +17,14 @@ class User {
         const pool = new Pool({
             user: 'postgres',
             host: 'localhost',
-            database: 'eduana', 
-            password: 'Heat001#',   
+            database: 'eduana', // Change this to the name of your database
+            password: 'Heat001#',   // Change this to your database password
             port: 5432,
         });
 
         try {
             // Execute the query to fetch user details by userId
-            const res = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM public."user" WHERE id = $1', [userId]);
+            const res = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM public."User" WHERE id = $1', [userId]); // Change the table name to match your database schema
             if (res.rows.length > 0) {
                 // If user is found, create and return a new User object
                 const user = res.rows[0]; 
