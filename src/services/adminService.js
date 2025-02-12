@@ -1,21 +1,18 @@
-const { PrismaClient } = require("@prisma/client"); // Use require instead of import
-
-const prisma = new PrismaClient(); // Instantiate PrismaClient
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 class AdminService {
     async changeUserRole(req, res) {
-        try {
-            const { newRole, userId } = req.body;
-            const updatedUser = await prisma.user.update({ // Ensure "user" is lowercase
-                where: { id: userId },
-                data: { role: newRole },
-            });
-            res.status(200).json(updatedUser);
-        } catch (err) {
-            console.log(err);
-            res.status(500).send(err);
-        }
+        const { newRole } = req.body;
+        const { id } = req.params;
+
+        if (!newRole) throw new Error("New role is required");
+
+        return prisma.user.update({
+            where: {id: parseInt(id)},
+            data: {role: newRole},
+        });
     }
 }
 
-module.exports = new AdminService(); // Ensure correct export
+module.exports = new AdminService();
