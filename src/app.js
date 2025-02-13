@@ -1,10 +1,10 @@
 const express = require('express');
 const healthCheckerRouter = require('./routes/healthchecker');
-const userCheckerRouter = require('./routes/userchecker');
+const userRouter = require('./routes/user');
 
 const app = express();
 app.use(express.json());
 app.use('/api', healthCheckerRouter);
-app.use('/api', userCheckerRouter);
+app.use('/api', userRouter);
 
 module.exports = app;

@@ -1,4 +1,5 @@
-const { Pool } = require('pg'); // Import the Pool class from the pg module
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 class User {
     constructor(id, username, email, role, createdAt, updatedAt) {
@@ -11,24 +12,17 @@ class User {
         this.updatedAt = updatedAt;
     }
 
-    // Static method to fetch user details from the database
+    // Static method to fetch user details from the database using Prisma
     static async fetchUserDetails(userId) {
-        // Create a new pool instance with the database connection details
-        const pool = new Pool({
-            user: 'postgres',
-            host: 'localhost',
-            database: 'eduana', // Change this to the name of your database
-            password: 'Heat001#',   // Change this to your database password
-            port: 5432,
-        });
-
         try {
-            // Execute the query to fetch user details by userId
-            const res = await pool.query('SELECT id, username, email, role, created_at, updated_at FROM public."User" WHERE id = $1', [userId]); // Change the table name to match your database schema
-            if (res.rows.length > 0) {
+            // Fetch user details by userId using Prisma
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+            });
+
+            if (user) {
                 // If user is found, create and return a new User object
-                const user = res.rows[0]; 
-                return new User(user.id, user.username, user.email, user.role, user.created_at, user.updated_at); 
+                return new User(user.id, user.username, user.email, user.role, user.createdAt, user.updatedAt);
             } else {
                 // If no user is found, throw an error
                 throw new Error('User not found');
@@ -37,9 +31,6 @@ class User {
             // Log and rethrow any errors that occur during the query
             console.error(err);
             throw err;
-        } finally {
-            // Close the pool to release the database connection
-            await pool.end();
         }
     }
 }
