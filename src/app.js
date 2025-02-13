@@ -5,6 +5,6 @@ const userRouter = require('./routes/user');
 const app = express();
 app.use(express.json());
 app.use('/api', healthCheckerRouter);
-app.use('/api', userRouter);
+app.use('/api/users', userRouter);
 
 module.exports = app;
