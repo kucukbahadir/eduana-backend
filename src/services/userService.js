@@ -7,8 +7,9 @@ class UserService {
         try {
             // Query the database to find a unique user by id
             const user = await prisma.user.findUnique({
-                where: { id: userId },
-            });
+                omit: {password: true}, //Sometimes this is wacky. If you get an error it's because your prisma client is out of date. Then use omitApi instead.
+                where: { id: userId }
+                });
 
             // If user is found, return the user object
             if (user) {
