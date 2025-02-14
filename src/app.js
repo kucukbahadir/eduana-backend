@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const adminAuthMiddleware = require('./middleware/adminAuth');
 const healthCheckerRouter = require('./routes/healthchecker');
+const userRouter = require('./routes/user');
 
 const app = express();
 

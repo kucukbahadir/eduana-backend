@@ -4,6 +4,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// Remember to run `prisma generate` after modifying this file
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,14 +15,72 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RoleType {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+  COORDINATOR
+}
+
 model User {
-  id          String   @id @default(uuid())
-  username    String   @unique
-  email       String   @unique
-  password    String
-  role        Role     @default(student)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  role         RoleType  @default(STUDENT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now())
+  classes      Class[]   @relation("TeacherClasses")
+  lessons      Lesson[]  @relation("TeacherLessons")
+  attendances  Attendance[]
+}
+
+model Class {
+  id          Int           @id @default(autoincrement())
+  name        String
+  teacherId   Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now())
+  teacher     User?         @relation("TeacherClasses", fields: [teacherId], references: [id])
+  announcements Announcement[]
+  lessons     Lesson[]
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  classId   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  class     Class?   @relation(fields: [classId], references: [id])
+}
+
+model Lesson {
+  id           Int       @id @default(autoincrement())
+  classId      Int?
+  teacherId    Int?
+  scheduledTime DateTime
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now())
+  class        Class?    @relation(fields: [classId], references: [id])
+  teacher      User?     @relation("TeacherLessons", fields: [teacherId], references: [id])
+  attendances  Attendance[]
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  lessonId  Int
+  studentId Int
+  present   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  student   User     @relation(fields: [studentId], references: [id])
+
+  @@unique([lessonId, studentId])
 }
 
 enum Role {
