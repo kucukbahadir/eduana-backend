@@ -8,7 +8,14 @@ class UserService {
             // Query the database to find a unique user by id
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-            });
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    role: true,
+                    createdAt: true,
+                    updatedAt: true
+        }});
 
             // If user is found, return the user object
             if (user) {
