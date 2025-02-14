@@ -1,17 +1,20 @@
+// src/app.js
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/auth.js');
-const adminAuthMiddleware = require('./middleware/adminAuth.js');
-const healthCheckerRouter = require('./routes/healthchecker.js');
+const authRoutes = require('./routes/authRoutes');
+const adminAuthMiddleware = require('./middleware/adminAuth');
+const healthCheckerRouter = require('./routes/healthchecker');
 
 const app = express();
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
 
 // Allow preflight requests
 app.options('*', cors());
@@ -25,7 +28,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     message: 'Something went wrong!',
-    error: err.message
+    error: err.message,
   });
 });
 
