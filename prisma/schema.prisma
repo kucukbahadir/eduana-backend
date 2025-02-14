@@ -82,3 +82,11 @@ model Attendance {
 
   @@unique([lessonId, studentId])
 }
+
+enum Role {
+  admin
+  student
+  teacher
+  coordinator
+  parent
+}
