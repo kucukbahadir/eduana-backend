@@ -1,4 +1,4 @@
-const UserService = require('../services/userService');
+const UserService = require("../services/userService");
 const jwt = require('jsonwebtoken');
 
 class UserController {
@@ -10,7 +10,7 @@ class UserController {
             // const testToken = jwt.sign({ userId: testUserId }, hushKey, { expiresIn: '1h' });
             // console.log(`Test JWT Token: ${testToken}`);
             // req.headers.authorization = `Bearer ${testToken}`;
-
+    
             // Extract the token from the authorization header if it exists
             const token = req.headers.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null;
             
@@ -18,7 +18,7 @@ class UserController {
             if (!token) {
                 return res.status(401).json({ error: 'No token provided or token is malformed' });
             }
-
+    
             // Verify the token using the secret key
             const secretKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey';
             const decodedToken = jwt.verify(token, secretKey);
@@ -36,6 +36,35 @@ class UserController {
             res.status(500).json({ error: err.message });
         }
     }
+
+    async requestPasswordReset(req, res) {
+        try {
+            const { email } = req.body;
+
+            await UserService.requestPasswordReset(email);
+            
+            console.log(`Password reset requested for: ${email}`);
+            return res.status(200).json({ message: `Password reset confirmation sent to: ${email}` });
+        } catch (error) {
+            console.error('Reset password request error: ', error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    }
+    
+    async changePassword(req, res) {
+        try {
+            const { token } = req.params;
+            const { password } = req.body;
+
+            await UserService.changePassword(token, password);
+
+            console.log('Password changed successfully');
+            return res.status(200).json({ message: 'Password changed successfully' });
+        } catch (error) {
+            console.error('Update password error: ', error);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+    }
 }
 
-module.exports = UserController;
+module.exports = new UserController();

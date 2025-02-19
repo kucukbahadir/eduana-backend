@@ -34,6 +34,8 @@ model User {
   classes      Class[]   @relation("TeacherClasses")
   lessons      Lesson[]  @relation("TeacherLessons")
   attendances  Attendance[]
+  resetToken String?
+  resetTokenExpiry DateTime?
 }
 
 model Class {
