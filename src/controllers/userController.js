@@ -11,8 +11,6 @@ class UserController {
             const userType = req.params.userType;
             const credentials = req.body;
 
-            console.log(`Login attempt for userType: ${userType}`, credentials);
-
             const response = await this.userService.authenticateUser(userType, credentials);
             if (response.success) {
                 console.log(`User authenticated successfully: ${userType}`);

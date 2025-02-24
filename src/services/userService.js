@@ -7,10 +7,6 @@ class UserService {
         try {
             // Normalize userType to uppercase
             userType = userType.toUpperCase();
-            let educatorRole = credentials.role.toUpperCase();
-            console.log(userType);
-            console.log(educatorRole);
-
             let user = null;
 
             // Authenticate STUDENT
@@ -35,6 +31,8 @@ class UserService {
             }
             // Authenticate EDUCATORS (Admin, Coordinator, Teacher)
             else if (userType === "EDUCATORS") {
+                let educatorRole = credentials.role.toUpperCase();
+
                 user = await prisma.user.findUnique({
                     where: { email: credentials.email },
                 });
