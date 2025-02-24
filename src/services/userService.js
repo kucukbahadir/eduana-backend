@@ -15,7 +15,7 @@ class UserService {
                 omit: {password: true}, //Sometimes this is wacky. If you get an error it's because your prisma client is out of date. Then use omitApi instead.
                 where: { id: userId }
                 });
-    
+
             // If user is found, return the user object
             if (user) {
                 return user;
@@ -36,7 +36,7 @@ class UserService {
         const url = 'http://localhost:' + (process.env.PORT || 3000)
         const transporter = nodemailer.createTransport(emailConfig.smtp);
         const user = await prisma.user.findUnique({ where: { email } });
-        
+
         if (!user) throw new Error('User not found');
 
         await prisma.user.update({
@@ -80,7 +80,7 @@ class UserService {
         if (new Date() > user.resetTokenExpiry) throw new Error('Token expired');
 
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-        
+
         await prisma.user.update({
             where: { email: user.email },
             data: {
@@ -89,6 +89,58 @@ class UserService {
                 resetTokenExpiry: null
             }
         })
+    }
+    // Function to authenticate user based on userType and credentials
+    async authenticateUser(userType, credentials) {
+        try {
+            userType = userType.toUpperCase();
+            let user = null;
+            let redirect = null;
+
+            if (userType === "STUDENT") {
+                user = await prisma.user.findUnique({
+                    where: { username: credentials.name },
+                });
+
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.code, user.passwordHash);
+                    if (passwordMatch && user.role === "STUDENT") {
+                        redirect = "/dashboard/student";  // ✅ Store redirect URL
+                        return { success: true, user, redirect };
+                    }
+                }
+            } else if (userType === "PARENT") {
+                user = await prisma.user.findUnique({
+                    where: { email: credentials.email },
+                });
+
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash);
+                    if (passwordMatch && user.role === "PARENT") {
+                        redirect = "/dashboard/parent";
+                        return { success: true, user, redirect };
+                    }
+                }
+            } else if (userType === "EDUCATORS") {
+                let educatorRole = credentials.role.toUpperCase();
+                user = await prisma.user.findUnique({
+                    where: { email: credentials.email },
+                });
+
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash);
+                    if (passwordMatch && user.role === educatorRole) {
+                        redirect = `/dashboard/${user.role.toLowerCase()}`;
+                        return { success: true, user, redirect };
+                    }
+                }
+            }
+
+            return { success: false, message: "Invalid credentials or role mismatch" };
+        } catch (error) {
+            console.error("Error during authentication:", error);
+            return { success: false, message: "An error occurred during authentication" };
+        }
     }
 }
 

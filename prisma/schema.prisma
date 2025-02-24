@@ -24,29 +24,29 @@ enum RoleType {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  username     String    @unique
-  email        String    @unique
-  passwordHash String
-  role         RoleType  @default(STUDENT)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now())
-  classes      Class[]   @relation("TeacherClasses")
-  lessons      Lesson[]  @relation("TeacherLessons")
-  attendances  Attendance[]
-  resetToken String?
+  id               Int          @id @default(autoincrement())
+  username         String       @unique
+  email            String       @unique
+  passwordHash     String
+  role             RoleType     @default(STUDENT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now())
+  classes          Class[]      @relation("TeacherClasses")
+  lessons          Lesson[]     @relation("TeacherLessons")
+  attendances      Attendance[]
+  resetToken       String?
   resetTokenExpiry DateTime?
 }
 
 model Class {
-  id          Int           @id @default(autoincrement())
-  name        String
-  teacherId   Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now())
-  teacher     User?         @relation("TeacherClasses", fields: [teacherId], references: [id])
+  id            Int            @id @default(autoincrement())
+  name          String
+  teacherId     Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now())
+  teacher       User?          @relation("TeacherClasses", fields: [teacherId], references: [id])
   announcements Announcement[]
-  lessons     Lesson[]
+  lessons       Lesson[]
 }
 
 model Announcement {
@@ -60,16 +60,16 @@ model Announcement {
 }
 
 model Lesson {
-  id           Int       @id @default(autoincrement())
-  classId      Int?
-  teacherId    Int?
+  id            Int          @id @default(autoincrement())
+  classId       Int?
+  teacherId     Int?
   scheduledTime DateTime
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now())
-  class        Class?    @relation(fields: [classId], references: [id])
-  teacher      User?     @relation("TeacherLessons", fields: [teacherId], references: [id])
-  attendances  Attendance[]
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now())
+  class         Class?       @relation(fields: [classId], references: [id])
+  teacher       User?        @relation("TeacherLessons", fields: [teacherId], references: [id])
+  attendances   Attendance[]
 }
 
 model Attendance {
