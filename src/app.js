@@ -11,6 +11,6 @@ app.use(cors());
 
 // Existing health checker route
 app.use("/api", healthCheckerRouter);
-app.use("/api/users", userRouter);
+app.use("/api/users", usersRouter);
 
 module.exports = app;

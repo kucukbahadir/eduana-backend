@@ -65,28 +65,42 @@ class UserController {
             return res.status(500).json({ message: 'Internal server error' });
         }
     }
-    loginUser = async (req, res) => {
+
+    async loginUser(req, res) {
         try {
             const userType = req.params.userType;
             const credentials = req.body;
 
-            const response = await this.userService.authenticateUser(userType, credentials);
-            if (response.success) {
-                console.log(`User authenticated successfully: ${userType}`);
-            }
-            else {
+            const response = await UserService.authenticateUser(userType, credentials);
+
+            if (!response.success || !response.user) {
                 console.log(response.message);
-                console.log(`Login failed for userType: ${req.params.userType}`)
+                return res.status(401).json({ success: false, message: "Invalid credentials" });
             }
 
-            return res.json(response);
+            console.log(`User authenticated successfully: ${userType}`);
+
+            // Generate JWT token with user ID
+            const token = jwt.sign(
+                { userId: response.user.id },
+                process.env.JWT_SECRET_KEY,
+                { expiresIn: "2h" }
+            );
+
+            console.log("Generated token:", token);
+
+            return res.json({
+                success: true,
+                message: "Login successful",
+                token,
+                redirect: response.redirect  // Include redirect URL
+            });
+
         } catch (error) {
             console.error(`Login failed for userType: ${req.params.userType}`, error.message);
-
-            // Always return JSON even on errors
-            return res.status(401).json({ success: false, message: "Invalid credentials" });
+            return res.status(500).json({ success: false, message: "Internal server error" });
         }
-    };
+    }
 }
 
 module.exports = new UserController();

@@ -93,44 +93,49 @@ class UserService {
     // Function to authenticate user based on userType and credentials
     async authenticateUser(userType, credentials) {
         try {
-            // Normalize userType to uppercase
             userType = userType.toUpperCase();
             let user = null;
+            let redirect = null;
 
-            // Authenticate STUDENT
             if (userType === "STUDENT") {
                 user = await prisma.user.findUnique({
                     where: { username: credentials.name },
                 });
 
-                if (user && user.password === credentials.code && user.role === "STUDENT") {
-                    return { success: true, redirect: "/dashboard/student" };
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.code, user.passwordHash);
+                    if (passwordMatch && user.role === "STUDENT") {
+                        redirect = "/dashboard/student";  // ✅ Store redirect URL
+                        return { success: true, user, redirect };
+                    }
                 }
-            }
-            // Authenticate PARENT
-            else if (userType === "PARENT") {
+            } else if (userType === "PARENT") {
                 user = await prisma.user.findUnique({
                     where: { email: credentials.email },
                 });
 
-                if (user && user.password === credentials.password && user.role === "PARENT") {
-                    return { success: true, redirect: "/dashboard/parent" };
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash);
+                    if (passwordMatch && user.role === "PARENT") {
+                        redirect = "/dashboard/parent";
+                        return { success: true, user, redirect };
+                    }
                 }
-            }
-            // Authenticate EDUCATORS (Admin, Coordinator, Teacher)
-            else if (userType === "EDUCATORS") {
+            } else if (userType === "EDUCATORS") {
                 let educatorRole = credentials.role.toUpperCase();
-
                 user = await prisma.user.findUnique({
                     where: { email: credentials.email },
                 });
 
-                if (user && user.password === credentials.password && user.role === educatorRole) {
-                    return { success: true, redirect: `/dashboard/${user.role.toLowerCase()}` };
+                if (user && user.passwordHash) {
+                    const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash);
+                    if (passwordMatch && user.role === educatorRole) {
+                        redirect = `/dashboard/${user.role.toLowerCase()}`;
+                        return { success: true, user, redirect };
+                    }
                 }
             }
 
-            // If user is not found or credentials are incorrect
             return { success: false, message: "Invalid credentials or role mismatch" };
         } catch (error) {
             console.error("Error during authentication:", error);
