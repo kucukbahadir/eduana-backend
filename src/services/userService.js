@@ -7,6 +7,9 @@ class UserService {
         try {
             // Normalize userType to uppercase
             userType = userType.toUpperCase();
+            let educatorRole = credentials.role.toUpperCase();
+            console.log(userType);
+            console.log(educatorRole);
 
             let user = null;
 
@@ -31,12 +34,12 @@ class UserService {
                 }
             }
             // Authenticate EDUCATORS (Admin, Coordinator, Teacher)
-            else if (["ADMIN", "COORDINATOR", "TEACHER"].includes(userType)) {
+            else if (userType === "EDUCATORS") {
                 user = await prisma.user.findUnique({
                     where: { email: credentials.email },
                 });
 
-                if (user && user.password === credentials.password && user.role === userType) {
+                if (user && user.password === credentials.password && user.role === educatorRole) {
                     return { success: true, redirect: `/dashboard/${user.role.toLowerCase()}` };
                 }
             }
@@ -44,7 +47,7 @@ class UserService {
             // If user is not found or credentials are incorrect
             return { success: false, message: "Invalid credentials or role mismatch" };
         } catch (error) {
-            console.error("❌ Error during authentication:", error);
+            console.error("Error during authentication:", error);
             return { success: false, message: "An error occurred during authentication" };
         }
     }

@@ -11,20 +11,20 @@ class UserController {
             const userType = req.params.userType;
             const credentials = req.body;
 
-            console.log(`🔍 Login attempt for userType: ${userType}`, credentials);
+            console.log(`Login attempt for userType: ${userType}`, credentials);
 
             const response = await this.userService.authenticateUser(userType, credentials);
             if (response.success) {
-                console.log(`✅ User authenticated successfully: ${userType}`);
+                console.log(`User authenticated successfully: ${userType}`);
             }
             else {
                 console.log(response.message);
-                console.log(`❌ Login failed for userType: ${req.params.userType}`)
+                console.log(`Login failed for userType: ${req.params.userType}`)
             }
 
             return res.json(response);
         } catch (error) {
-            console.error(`❌ Login failed for userType: ${req.params.userType}`, error.message);
+            console.error(`Login failed for userType: ${req.params.userType}`, error.message);
 
             // Always return JSON even on errors
             return res.status(401).json({ success: false, message: "Invalid credentials" });
