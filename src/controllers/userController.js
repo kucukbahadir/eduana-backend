@@ -82,16 +82,12 @@ class UserController {
                 return res.status(401).json({ success: false, message: "Invalid credentials" });
             }
 
-            console.log(`User authenticated successfully: ${userType}`);
-
             // Generate JWT token with user ID
             const token = jwt.sign(
                 { userId: response.user.id },
                 process.env.JWT_SECRET_KEY,
                 { expiresIn: "2h" }
             );
-
-            console.log("Generated token:", token);
 
             return res.json({
                 success: true,
