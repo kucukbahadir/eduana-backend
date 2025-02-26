@@ -20,7 +20,7 @@ router.post("/login/:userType", (req, res) => UserController.loginUser(req, res)
 router.get('/', authenticateUser, (req, res) => UserController.getUserDetails(req, res));
 
 // Example: If only admins should fetch user details
-// router.get('/', authenticateUser, adminMiddleware, (req, res) => UserController.getUserDetails(req, res));
+//router.get('/', authenticateUser, adminMiddleware, (req, res) => UserController.getUserDetails(req, res));
 
 // Example: Protecting a route for teachers only
 // router.get('/teacher-dashboard', authenticateUser, teacherMiddleware, (req, res) => UserController.teacherDashboard(req, res));
