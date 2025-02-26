@@ -104,7 +104,7 @@ class UserService {
                 if (user && user.passwordHash) {
                     const passwordMatch = await bcrypt.compare(credentials.code, user.passwordHash);
                     if (passwordMatch && user.role === "STUDENT") {
-                        redirect = "/dashboard/student";  // ✅ Store redirect URL
+                        redirect = "/dashboard/student";  // Store redirect URL
                         return { success: true, user, redirect };
                     }
                 }
