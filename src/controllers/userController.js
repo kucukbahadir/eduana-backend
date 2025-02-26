@@ -2,26 +2,27 @@ const UserService = require("../services/userService");
 const jwt = require('jsonwebtoken');
 
 class UserController {
-    static async getUserDetails(req, res) {
+     async getUserDetails(req, res) {
         try {
-            // Uncomment this code block to generate a JWT token for testing purposes
-            // const testUserId = 1;
-            // const hushKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey';
-            // const testToken = jwt.sign({ userId: testUserId }, hushKey, { expiresIn: '1h' });
-            // console.log(`Test JWT Token: ${testToken}`);
-            // req.headers.authorization = `Bearer ${testToken}`;
-
-            // Extract the token from the authorization header if it exists
-            const token = req.headers.authorization && req.headers.authorization.startsWith('Bearer ') ? req.headers.authorization.split(' ')[1] : null;
+            // Extract the token from the authorization header
+            const token = req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
+                ? req.headers.authorization.split(' ')[1]
+                : null;
 
             // If no token is provided or the token is malformed, return a 401 error
             if (!token) {
                 return res.status(401).json({ error: 'No token provided or token is malformed' });
             }
 
-            // Verify the token using the secret key
+            // Verify the token using the secret key, but catch JWT-specific errors
             const secretKey = process.env.JWT_SECRET_KEY || 'defaultSecretKey';
-            const decodedToken = jwt.verify(token, secretKey);
+            let decodedToken;
+
+            try {
+                decodedToken = jwt.verify(token, secretKey);
+            } catch (error) {
+                return res.status(401).json({ error: 'Invalid or expired token' });
+            }
 
             // Extract the user ID from the decoded token
             const userId = decodedToken.userId;
@@ -30,12 +31,15 @@ class UserController {
             const user = await UserService.fetchUserDetails(userId);
 
             // Return the user details in the response
-            res.status(200).json(user);
+            return res.status(200).json(user);
+
         } catch (err) {
-            // If an error occurs, return a 500 error with the error message
-            res.status(500).json({ error: err.message });
+            return res.status(500).json({ error: 'Internal server error' });
         }
     }
+
+
+
 
     async requestPasswordReset(req, res) {
         try {
@@ -51,7 +55,7 @@ class UserController {
         }
     }
 
-    async changePassword(req, res) {
+     async changePassword(req, res) {
         try {
             const { token } = req.params;
             const { password } = req.body;
@@ -66,7 +70,7 @@ class UserController {
         }
     }
 
-    async loginUser(req, res) {
+     async loginUser(req, res) {
         try {
             const userType = req.params.userType;
             const credentials = req.body;
@@ -78,16 +82,12 @@ class UserController {
                 return res.status(401).json({ success: false, message: "Invalid credentials" });
             }
 
-            console.log(`User authenticated successfully: ${userType}`);
-
             // Generate JWT token with user ID
             const token = jwt.sign(
                 { userId: response.user.id },
                 process.env.JWT_SECRET_KEY,
                 { expiresIn: "2h" }
             );
-
-            console.log("Generated token:", token);
 
             return res.json({
                 success: true,

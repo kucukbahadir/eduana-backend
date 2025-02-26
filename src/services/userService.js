@@ -7,12 +7,11 @@ const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10;
 
 class UserService {
-    // Static method to fetch user details by userId
-    static async fetchUserDetails(userId) {
+    async fetchUserDetails(userId) {
         try {
             // Query the database to find a unique user by id
             const user = await prisma.user.findUnique({
-                omit: {password: true}, //Sometimes this is wacky. If you get an error it's because your prisma client is out of date. Then use omitApi instead.
+                omit: {passwordHash: true}, //Sometimes this is wacky. If you get an error it's because your prisma client is out of date. Then use omitApi instead.
                 where: { id: userId }
                 });
 
@@ -105,7 +104,7 @@ class UserService {
                 if (user && user.passwordHash) {
                     const passwordMatch = await bcrypt.compare(credentials.code, user.passwordHash);
                     if (passwordMatch && user.role === "STUDENT") {
-                        redirect = "/dashboard/student";  // ✅ Store redirect URL
+                        redirect = "/dashboard/student";  // Store redirect URL
                         return { success: true, user, redirect };
                     }
                 }
