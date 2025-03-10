@@ -1,4 +1,3 @@
-// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 
@@ -20,31 +19,14 @@ function verifyJwtToken(token) {
 }
 
 /**
- * Checks if a user has an admin role by querying the database.
- *
- * @param {number} userId - User ID
- * @returns {Promise<boolean>} - Resolves to true if user is an admin, otherwise false
- */
-async function isAdmin(userId) {
-    try {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        return user && user.role === 'ADMIN';
-    } catch (error) {
-        console.error("Database Error in isAdmin:", error.message);
-        return false;
-    }
-}
-
-/**
- * Middleware for token-based authentication and admin authorization.
- * If the token is valid and the user is an admin, the user object is attached to the request.
- * Otherwise, a 401 Unauthorized or 403 Forbidden response is returned.
+ * Middleware to authenticate users via JWT.
+ * Attaches the user object to the request if valid.
  *
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  */
-async function handleTokenBasedAuthentication(req, res, next) {
+async function authenticateUser(req, res, next) {
     const authenticationToken = req.headers["authorization"];
 
     if (!authenticationToken) {
@@ -57,37 +39,20 @@ async function handleTokenBasedAuthentication(req, res, next) {
     }
 
     try {
-        // Retrieve user using Prisma with the userId from the JWT token
+        // Retrieve user using Prisma
         const user = await prisma.user.findUnique({ where: { id: jwtToken.userId } });
 
         if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
         }
 
-        // Attach the user object to the request
+        // Attach the user object to the request for further middleware usage
         req.user = user;
-
-        // Check if the user is an admin
-        if (!(await isAdmin(user.id))) {
-            return res.status(403).json({ message: "Forbidden: Admins only" });
-        }
-
-        next();  // Continue to the next middleware/controller
+        next();
     } catch (error) {
         console.error("Prisma Database Error:", error.message);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
-/**
- * Extracts the user ID from a JWT token.
- *
- * @param {string} token - JWT token
- * @returns {number|undefined} - User ID or undefined if invalid
- */
-function getUserIdByToken(token) {
-    const payload = verifyJwtToken(token);
-    return payload ? payload.userId : undefined;
-}
-
-module.exports = { handleTokenBasedAuthentication, getUserIdByToken, isAdmin };
+module.exports = { authenticateUser };
