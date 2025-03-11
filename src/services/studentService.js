@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 class StudentService {
     async getStudentsByClassId(classId) {
         try {
-            return await prisma.student.findMany({
+            return await prisma.user.findMany({
                 where: {classId},
                 include: {class: true} // Optional: Include class details
             });
