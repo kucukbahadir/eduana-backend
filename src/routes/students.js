@@ -5,8 +5,6 @@ const {authenticateUser} = require("../middelware/authMiddleware");
 const {
     adminMiddleware,
     teacherMiddleware,
-    parentMiddleware,
-    studentMiddleware,
     coordinatorMiddleware
 } = require("../middelware/rbacMiddlewares");
 
