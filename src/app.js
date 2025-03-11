@@ -2,7 +2,7 @@ const express = require('express');
 const healthCheckerRouter = require('./routes/healthchecker');
 const usersRouter = require('./routes/users');
 const studentRouter = require('./routes/students')
-const adminRouter = require("./routes/adminRoutes");
+const adminRouter = require("./routes/admin");
 
 const app = express();
 app.use(express.json());
