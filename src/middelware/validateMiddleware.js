@@ -11,3 +11,17 @@ const validateClassId = (req, res, next) => {
     }
     next();
 };
+
+/**
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next function
+ */
+const validateTeacherId = (req, res, next) => {
+    const { teacherId } = req.params;
+    if (!teacherId) {
+        return res.status(400).json({ error: 'teacherId is required' });
+    }
+    next();
+};
