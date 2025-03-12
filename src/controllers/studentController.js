@@ -1,3 +1,5 @@
+const StudentService = require("../services/studentService")
+
 class StudentController {
     async getStudentsByClassId(req, res) {
         try {
@@ -27,7 +29,7 @@ class StudentController {
             if (!teacherId) {
                 return res.status(400).json({error: 'teacherId is required'})
             }
-            const students = await StudentService.getStudentsByteacherId(teacherId);
+            const students = await StudentService.getStudentsByTeacherId(teacherId);
 
             if (!students.length) {
                 return res.status(404).json({error: 'No students found or teacher does not exist'});
