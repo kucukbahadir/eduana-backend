@@ -1,3 +1,5 @@
+const StudentService = require("../services/studentService")
+
 class StudentController {
     async getStudentsByClassId(req, res) {
         try {
