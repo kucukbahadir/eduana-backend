@@ -1,86 +1,400 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file for EduAna
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// Remember to run `prisma generate` after modifying this file
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // Change to your preferred database provider if needed
   url      = env("DATABASE_URL")
 }
 
-enum RoleType {
-  ADMIN
-  TEACHER
-  STUDENT
-  PARENT
-  COORDINATOR
+// User Management
+enum UserType {
+  STUDENT    // Student role with access to learning materials and sessions
+  TEACHER    // Teacher role with class management and evaluation permissions
+  PARENT     // Parent role with access to view their children's progress
+  COORDINATOR // Coordinator role for managing teachers and curricula
+  ADMIN      // Administrator role with full system access
 }
 
 model User {
-  id               Int          @id @default(autoincrement())
-  username         String       @unique
-  email            String       @unique
-  passwordHash     String
-  role             RoleType     @default(STUDENT)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @default(now())
-  classes          Class[]      @relation("TeacherClasses")
-  lessons          Lesson[]     @relation("TeacherLessons")
-  attendances      Attendance[]
+  id               Int       @id @default(autoincrement())
+  name             String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   resetToken       String?
-  resetTokenExpiry DateTime?
+  resetTokenExpiry String?
+
+  role             UserType
+
+  // Role-specific profiles (one-to-one relations)
+  student          Student?
+  teacher          Teacher?
+  parent           Parent?
+  coordinator      Coordinator?
+  admin            Admin?
 }
 
+model Teacher {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  password     String
+  phoneNumber  String
+  
+  // Relation to User table
+  userId       Int        @unique
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relation to Teaching
+  teachings    Teaching[]
+}
+
+model Student {
+  id                 Int                      @id @default(autoincrement())
+  loginCode          Int                      @unique
+  age                Int?
+  languagePreference String?
+  dietRestrictions   String?
+  previousExperience String?
+  miscellaneousRemarks String?
+  parentPhoneNumber  String?
+  
+  // Relation to User table
+  userId             Int                      @unique
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Related tables
+  externalAccounts   ExternalStudentAccount[]
+  enrollments        Enrollment[]
+  studentParents     StudentParent[]
+  attendances        Attendance[]
+  evaluations        Evaluation[]
+}
+
+model ExternalStudentAccount {
+  id         Int      @id @default(autoincrement())
+  username   String
+  password   String
+  
+  // Relation to Student
+  studentId  Int
+  student    Student  @relation(fields: [studentId], references: [id])
+}
+
+model Parent {
+  id          Int             @id @default(autoincrement())
+  email       String          @unique
+  password    String
+  phoneNumber String
+  
+  // Relation to User table
+  userId      Int             @unique
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Related tables
+  studentParents StudentParent[]
+}
+
+model Coordinator {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  phoneNumber String
+  
+  // Relation to User table
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Admin {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  phoneNumber String
+  
+  // Relation to User table
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudentParent {
+  // Relations for many-to-many
+  parentId    Int
+  parent      Parent   @relation(fields: [parentId], references: [id])
+  studentId   Int
+  student     Student  @relation(fields: [studentId], references: [id])
+
+  // Composite primary key
+  @@id([parentId, studentId])
+}
+
+// Class Management
 model Class {
-  id            Int            @id @default(autoincrement())
-  name          String
-  teacherId     Int?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @default(now())
-  teacher       User?          @relation("TeacherClasses", fields: [teacherId], references: [id])
+  id           Int            @id @default(autoincrement())
+  title        String
+  description  String?
+  
+  // Relations
+  sessions     Session[]
+  evaluations  Evaluation[]
   announcements Announcement[]
-  lessons       Lesson[]
+  enrollments  Enrollment[]
+  teachings    Teaching[]
 }
 
-model Announcement {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  classId   Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  class     Class?   @relation(fields: [classId], references: [id])
+model Enrollment {
+  // Relations for many-to-many
+  studentId    Int
+  student      Student  @relation(fields: [studentId], references: [id])
+  classId      Int
+  class        Class    @relation(fields: [classId], references: [id])
+
+  // Composite primary key
+  @@id([studentId, classId])
+}
+
+model Teaching {
+  // Relations for many-to-many
+  teacherId    Int
+  teacher      Teacher  @relation(fields: [teacherId], references: [id])
+  sessionId    Int
+  session      Session  @relation(fields: [sessionId], references: [id])
+  classId      Int
+  class        Class    @relation(fields: [classId], references: [id])
+
+  // Composite primary key
+  @@id([teacherId, sessionId, classId])
+}
+
+// Curriculum and Content
+model Curriculum {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  field        String
+  type         String
+  level        String
+  
+  // Relations
+  lessons      Lesson[]
 }
 
 model Lesson {
-  id            Int          @id @default(autoincrement())
-  classId       Int?
-  teacherId     Int?
-  scheduledTime DateTime
-  notes         String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @default(now())
-  class         Class?       @relation(fields: [classId], references: [id])
-  teacher       User?        @relation("TeacherLessons", fields: [teacherId], references: [id])
-  attendances   Attendance[]
+  id           Int                 @id @default(autoincrement())
+  title        String
+  
+  // Relations to curriculum
+  curriculumId Int?
+  curriculum   Curriculum?         @relation(fields: [curriculumId], references: [id])
+  
+  // Relations to related materials
+  keywords     Keyword[]
+  slides       PresentationSlide[]
+  kahoots      Kahoot[]
+  sessions     Session[]
+}
+
+model Keyword {
+  id           Int      @id @default(autoincrement())
+  name         String?
+  definition   String?
+  
+  // Relations to lesson
+  lessonId     Int
+  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+}
+
+model PresentationSlide {
+  id           Int      @id @default(autoincrement())
+  type         String   // Language variant
+  url          String
+  
+  // Relations to lesson
+  lessonId     Int
+  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+}
+
+model Kahoot {
+  id           Int      @id @default(autoincrement())
+  type         String   // Language variant
+  url          String
+  
+  // Relations to lesson
+  lessonId     Int
+  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+}
+
+model Activity {
+  id           Int       @id @default(autoincrement())
+  name         String
+  description  String
+  
+  // Relations to sessions
+  sessions     Session[]
+}
+
+// Scheduling
+model Session {
+  id           Int          @id @default(autoincrement())
+  start        DateTime
+  end          DateTime
+  
+  // Relations
+  classId      Int
+  class        Class        @relation(fields: [classId], references: [id])
+  activityId   Int?
+  activity     Activity?    @relation(fields: [activityId], references: [id])
+  lessonId     Int?
+  lesson       Lesson?      @relation(fields: [lessonId], references: [id])
+  
+  // Related collections
+  attendances  Attendance[]
+  teachings    Teaching[]
+  sessionEvaluations SessionEvaluation[]
+}
+
+// Evaluation System
+model Evaluation {
+  id           Int                 @id @default(autoincrement())
+  
+  // Relations
+  classId      Int
+  class        Class               @relation(fields: [classId], references: [id])
+  studentId    Int
+  student      Student             @relation(fields: [studentId], references: [id])
+  
+  // Related evaluations
+  sessionEvaluations SessionEvaluation[]
+  finalEvaluation FinalEvaluation?
+}
+
+enum Independent {
+  COMPLETELY_INDEPENDENT  // Student works without requiring assistance
+  OCCASIONALLY_SEEKS_HELP // Student occasionally needs guidance
+  FREQUENTLY_SEEKS_HELP   // Student regularly requires assistance
+}
+
+enum Completion {
+  ALWAYS    // Student completes all assigned tasks
+  MOSTLY    // Student completes most assigned tasks
+  SOMETIMES // Student completes some assigned tasks
+  RARELY    // Student rarely completes assigned tasks
+}
+
+enum Creativity {
+  COMPLETELY_INSTRUCTION_FOCUSED                      // Student strictly follows instructions without deviation
+  MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES      // Student primarily follows instructions with minimal creative input
+  DISPLAYS_A_BALANCED_APPROACH                        // Student balances following instructions with creative contributions
+  MOSTLY_CREATIVE_SOMETIMES_FOLLOWS_INSTRUCTIONS      // Student primarily takes creative approach while occasionally following instructions
+  COMPLETELY_CREATIVE_AND_INDEPENDENT                 // Student takes an entirely creative and self-directed approach
+}
+
+enum Persistency {
+  VERY_PERSISTENT  // Student shows exceptional determination when facing challenges
+  PERSISTENT       // Student continues working through difficulties
+  AVERAGE          // Student shows typical persistence with challenges
+  QUICKLY_GIVES_UP // Student tends to abandon tasks when facing obstacles
+}
+
+enum Adherence {
+  ALWAYS_COMPLIED   // Student consistently follows classroom rules
+  USUALLY_COMPLIED  // Student generally follows classroom rules with occasional exceptions
+  SOMETIMES_COMPLIED // Student follows classroom rules inconsistently
+  DID_NOT_COMPLY    // Student regularly disregards classroom rules
+}
+
+model SessionEvaluation {
+  id           Int         @id @default(autoincrement())
+  active       Int
+  independent  Independent
+  completion   Completion
+  creativity   Creativity
+  persistency  Persistency
+  adherence    Adherence
+  notes        String?
+  
+  // Relations
+  evaluationId Int
+  evaluation   Evaluation  @relation(fields: [evaluationId], references: [id])
+  sessionId    Int
+  session      Session     @relation(fields: [sessionId], references: [id])
+}
+
+enum Level {
+  VERY_BEGINNER // Student has minimal understanding of core concepts
+  BEGINNER      // Student understands basic concepts but requires guidance
+  INTERMEDIATE  // Student can work independently on standard tasks
+  ADVANCED      // Student demonstrates strong proficiency and some creativity
+  EXPERT        // Student shows exceptional mastery of the subject matter
+  SUPER_HERO    // Student demonstrates extraordinary talent beyond course expectations
+}
+
+model FinalEvaluation {
+  id                   Int      @id @default(autoincrement())
+  roboticsCodingAptitude Int
+  programmingAptitude  Int
+  handsOnAptitude      Int
+  participation        Int
+  listeningSkills      Int
+  ruleAdherence        Int
+  analyticalIntelligence Int
+  problemSolvingAbility Int
+  creativity           Int
+  workSatisfaction     Int
+  learningInterest     Int
+  teamworkAdaptability Int
+  leadershipSkills     Int
+  socialInteraction    Int
+  distractabilityLevel Int
+  presentationSkills   Int
+  level                Level
+  notes                String?
+  
+  // One-to-one relation with evaluation
+  evaluationId         Int      @unique
+  evaluation           Evaluation @relation(fields: [evaluationId], references: [id])
+}
+
+enum Absence {
+  PRESENT  // Student attended the entire session
+  ABSENT   // Student did not attend the session
+  LATE     // Student arrived after the session began
+  EXCUSED  // Student absence was approved in advance
 }
 
 model Attendance {
-  id        Int      @id @default(autoincrement())
-  lessonId  Int
-  studentId Int
-  present   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  lesson    Lesson   @relation(fields: [lessonId], references: [id])
-  student   User     @relation(fields: [studentId], references: [id])
+  // Composite primary key fields
+  sessionId    Int
+  studentId    Int
+  
+  // Additional fields
+  present      Absence
+  notes        String?
+  timestamp    DateTime @default(now())
+  
+  // Relations
+  session      Session  @relation(fields: [sessionId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id])
 
-  @@unique([lessonId, studentId])
+  // Composite primary key definition
+  @@id([sessionId, studentId])
+}
+
+// Announcements
+model Announcement {
+  id           Int      @id @default(autoincrement())
+  title        String
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  classId      Int
+  class        Class    @relation(fields: [classId], references: [id])
 }
