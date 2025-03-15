@@ -1,0 +1,379 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id Int [pk, increment]
+  name String [not null]
+  username String [unique, not null]
+  password String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  resetToken String
+  resetTokenExpiry DateTime
+  role UserType [not null]
+  student Student
+  teacher Teacher
+  parent Parent
+  coordinator Coordinator
+  admin Admin
+}
+
+Table Teacher {
+  id Int [pk, increment]
+  email String [unique, not null]
+  phoneNumber String [not null]
+  userId Int [unique, not null]
+  user User [not null]
+  teachings Teaching [not null]
+}
+
+Table Student {
+  id Int [pk, increment]
+  age Int
+  languagePreference String
+  dietRestrictions String
+  previousExperience String
+  miscellaneousRemarks String
+  parentPhoneNumber String
+  userId Int [unique, not null]
+  user User [not null]
+  externalAccounts ExternalStudentAccount [not null]
+  enrollments Enrollment [not null]
+  studentParents StudentParent [not null]
+  attendances Attendance [not null]
+  evaluations Evaluation [not null]
+}
+
+Table ExternalStudentAccount {
+  id Int [pk, increment]
+  username String [not null]
+  studentId Int [not null]
+  student Student [not null]
+}
+
+Table Parent {
+  id Int [pk, increment]
+  email String [unique, not null]
+  phoneNumber String [not null]
+  userId Int [unique, not null]
+  user User [not null]
+  studentParents StudentParent [not null]
+}
+
+Table Coordinator {
+  id Int [pk, increment]
+  email String [unique, not null]
+  phoneNumber String [not null]
+  userId Int [unique, not null]
+  user User [not null]
+}
+
+Table Admin {
+  id Int [pk, increment]
+  email String [unique, not null]
+  phoneNumber String [not null]
+  userId Int [unique, not null]
+  user User [not null]
+}
+
+Table StudentParent {
+  parentId Int [not null]
+  parent Parent [not null]
+  studentId Int [not null]
+  student Student [not null]
+
+  indexes {
+    (parentId, studentId) [pk]
+  }
+}
+
+Table Class {
+  id Int [pk, increment]
+  title String [not null]
+  description String
+  sessions Session [not null]
+  evaluations Evaluation [not null]
+  announcements Announcement [not null]
+  enrollments Enrollment [not null]
+  teachings Teaching [not null]
+}
+
+Table Enrollment {
+  studentId Int [not null]
+  student Student [not null]
+  classId Int [not null]
+  class Class [not null]
+
+  indexes {
+    (studentId, classId) [pk]
+  }
+}
+
+Table Teaching {
+  teacherId Int [not null]
+  teacher Teacher [not null]
+  sessionId Int [not null]
+  session Session [not null]
+  classId Int [not null]
+  class Class [not null]
+
+  indexes {
+    (teacherId, sessionId, classId) [pk]
+  }
+}
+
+Table Curriculum {
+  id Int [pk, increment]
+  title String [not null]
+  description String [not null]
+  field String [not null]
+  type String [not null]
+  level String [not null]
+  lessons Lesson [not null]
+}
+
+Table Lesson {
+  id Int [pk, increment]
+  title String [not null]
+  curriculumId Int
+  curriculum Curriculum
+  keywords Keyword [not null]
+  slides PresentationSlide [not null]
+  kahoots Kahoot [not null]
+  sessions Session [not null]
+}
+
+Table Keyword {
+  id Int [pk, increment]
+  name String
+  definition String
+  lessonId Int [not null]
+  lesson Lesson [not null]
+}
+
+Table PresentationSlide {
+  id Int [pk, increment]
+  type String [not null]
+  url String [not null]
+  lessonId Int [not null]
+  lesson Lesson [not null]
+}
+
+Table Kahoot {
+  id Int [pk, increment]
+  type String [not null]
+  url String [not null]
+  lessonId Int [not null]
+  lesson Lesson [not null]
+}
+
+Table Activity {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null]
+  sessions Session [not null]
+}
+
+Table Session {
+  id Int [pk, increment]
+  start DateTime [not null]
+  end DateTime [not null]
+  classId Int [not null]
+  class Class [not null]
+  activityId Int
+  activity Activity
+  lessonId Int
+  lesson Lesson
+  attendances Attendance [not null]
+  teachings Teaching [not null]
+  sessionEvaluations SessionEvaluation [not null]
+}
+
+Table Evaluation {
+  id Int [pk, increment]
+  classId Int [not null]
+  class Class [not null]
+  studentId Int [not null]
+  student Student [not null]
+  sessionEvaluations SessionEvaluation [not null]
+  finalEvaluation FinalEvaluation
+}
+
+Table SessionEvaluation {
+  id Int [pk, increment]
+  active Int [not null]
+  independent Independent [not null]
+  completion Completion [not null]
+  creativity Creativity [not null]
+  persistency Persistency [not null]
+  adherence Adherence [not null]
+  notes String
+  evaluationId Int [not null]
+  evaluation Evaluation [not null]
+  sessionId Int [not null]
+  session Session [not null]
+}
+
+Table FinalEvaluation {
+  id Int [pk, increment]
+  roboticsCodingAptitude Int [not null]
+  programmingAptitude Int [not null]
+  handsOnAptitude Int [not null]
+  participation Int [not null]
+  listeningSkills Int [not null]
+  ruleAdherence Int [not null]
+  analyticalIntelligence Int [not null]
+  problemSolvingAbility Int [not null]
+  creativity Int [not null]
+  workSatisfaction Int [not null]
+  learningInterest Int [not null]
+  teamworkAdaptability Int [not null]
+  leadershipSkills Int [not null]
+  socialInteraction Int [not null]
+  distractabilityLevel Int [not null]
+  presentationSkills Int [not null]
+  level Level [not null]
+  notes String
+  evaluationId Int [unique, not null]
+  evaluation Evaluation [not null]
+}
+
+Table Attendance {
+  sessionId Int [not null]
+  studentId Int [not null]
+  present Absence [not null]
+  notes String
+  timestamp DateTime [default: `now()`, not null]
+  session Session [not null]
+  student Student [not null]
+
+  indexes {
+    (sessionId, studentId) [pk]
+  }
+}
+
+Table Announcement {
+  id Int [pk, increment]
+  title String [not null]
+  content String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  classId Int [not null]
+  class Class [not null]
+}
+
+Enum UserType {
+  STUDENT
+  TEACHER
+  PARENT
+  COORDINATOR
+  ADMIN
+}
+
+Enum Independent {
+  COMPLETELY_INDEPENDENT
+  OCCASIONALLY_SEEKS_HELP
+  FREQUENTLY_SEEKS_HELP
+}
+
+Enum Completion {
+  ALWAYS
+  MOSTLY
+  SOMETIMES
+  RARELY
+}
+
+Enum Creativity {
+  COMPLETELY_INSTRUCTION_FOCUSED
+  MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES
+  DISPLAYS_A_BALANCED_APPROACH
+  MOSTLY_CREATIVE_SOMETIMES_FOLLOWS_INSTRUCTIONS
+  COMPLETELY_CREATIVE_AND_INDEPENDENT
+}
+
+Enum Persistency {
+  VERY_PERSISTENT
+  PERSISTENT
+  AVERAGE
+  QUICKLY_GIVES_UP
+}
+
+Enum Adherence {
+  ALWAYS_COMPLIED
+  USUALLY_COMPLIED
+  SOMETIMES_COMPLIED
+  DID_NOT_COMPLY
+}
+
+Enum Level {
+  VERY_BEGINNER
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+  SUPER_HERO
+}
+
+Enum Absence {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+Ref: Teacher.userId - User.id [delete: Cascade]
+
+Ref: Student.userId - User.id [delete: Cascade]
+
+Ref: ExternalStudentAccount.studentId > Student.id
+
+Ref: Parent.userId - User.id [delete: Cascade]
+
+Ref: Coordinator.userId - User.id [delete: Cascade]
+
+Ref: Admin.userId - User.id [delete: Cascade]
+
+Ref: StudentParent.parentId > Parent.id
+
+Ref: StudentParent.studentId > Student.id
+
+Ref: Enrollment.studentId > Student.id
+
+Ref: Enrollment.classId > Class.id
+
+Ref: Teaching.teacherId > Teacher.id
+
+Ref: Teaching.sessionId > Session.id
+
+Ref: Teaching.classId > Class.id
+
+Ref: Lesson.curriculumId > Curriculum.id
+
+Ref: Keyword.lessonId > Lesson.id
+
+Ref: PresentationSlide.lessonId > Lesson.id
+
+Ref: Kahoot.lessonId > Lesson.id
+
+Ref: Session.classId > Class.id
+
+Ref: Session.activityId > Activity.id
+
+Ref: Session.lessonId > Lesson.id
+
+Ref: Evaluation.classId > Class.id
+
+Ref: Evaluation.studentId > Student.id
+
+Ref: SessionEvaluation.evaluationId > Evaluation.id
+
+Ref: SessionEvaluation.sessionId > Session.id
+
+Ref: FinalEvaluation.evaluationId - Evaluation.id
+
+Ref: Attendance.sessionId > Session.id
+
+Ref: Attendance.studentId > Student.id
+
+Ref: Announcement.classId > Class.id

@@ -1,25 +1,25 @@
-const AdminService = require("../services/adminService");
+const CoordinatorService = require("../services/coordinatorService");
 const UserService = require("../services/userService");
 
-class AdminController {
+class CoordinatorController {
   /**
-   * Creates a admin profile with the provided information
+   * Creates a coordinator profile with the provided information
    * 
    * @async
-   * @function createAdminProfile
+   * @function createCoordinatorProfile
    * @param {Object} req - Express request object
-   * @param {Object} req.body - Request body containing admin information
-   * @param {string} req.body.email - Admin's email address
-   * @param {string} req.body.phoneNumber - Admin's phone number
-   * @param {string} req.body.userId - ID of the user to associate with the admin profile
+   * @param {Object} req.body - Request body containing coordinator information
+   * @param {string} req.body.email - Coordinator's email address
+   * @param {string} req.body.phoneNumber - Coordinator's phone number
+   * @param {string} req.body.userId - ID of the user to associate with the coordinator profile
    * @param {Object} res - Express response object
    * @returns {Object} 201 status with success message if created successfully
    * @returns {Object} 400 status with error message if required fields are missing or invalid
    * @returns {Object} 404 status with error message if the user is not found
    * @returns {Object} 500 status with error message if server error occurs
-   * @throws {Error} When there is an issue creating the admin profile
+   * @throws {Error} When there is an issue creating the coordinator profile
    */
-  async createAdminProfile(req, res) {
+  async createCoordinatorProfile(req, res) {
     try {
       const { email, phoneNumber, userId } = req.body;
   
@@ -30,16 +30,16 @@ class AdminController {
       if (!email) return res.status(400).json({ message: "Email is required" });
       if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email address" });
 
-      const admin = await UserService.findById(userId);
-      if (!admin) return res.status(404).json({ message: "User not found" });
+      const coordinator = await UserService.findById(userId);
+      if (!coordinator) return res.status(404).json({ message: "User not found" });
 
-      await AdminService.createAdminProfile(email, phoneNumber, userId);
-      return res.status(201).json({ message: "Admin profile created successfully" });
+      await CoordinatorService.createCoordinatorProfile(email, phoneNumber, userId);
+      return res.status(201).json({ message: "Coordinator profile created successfully" });
     } catch (error) {
-      console.error("Error creating admin profile: ", error);
+      console.error("Error creating coordinator profile: ", error);
       return res.status(500).json({ message: "Internal server error" });
     }
   }
 }
 
-module.exports = new AdminController();
+module.exports = new CoordinatorController();
