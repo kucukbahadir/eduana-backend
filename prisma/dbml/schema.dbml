@@ -5,10 +5,12 @@
 Table User {
   id Int [pk, increment]
   name String [not null]
+  username String [unique, not null]
+  password String [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   resetToken String
-  resetTokenExpiry String
+  resetTokenExpiry DateTime
   role UserType [not null]
   student Student
   teacher Teacher
@@ -20,7 +22,6 @@ Table User {
 Table Teacher {
   id Int [pk, increment]
   email String [unique, not null]
-  password String [not null]
   phoneNumber String [not null]
   userId Int [unique, not null]
   user User [not null]
@@ -29,7 +30,6 @@ Table Teacher {
 
 Table Student {
   id Int [pk, increment]
-  loginCode Int [unique, not null]
   age Int
   languagePreference String
   dietRestrictions String
@@ -48,7 +48,6 @@ Table Student {
 Table ExternalStudentAccount {
   id Int [pk, increment]
   username String [not null]
-  password String [not null]
   studentId Int [not null]
   student Student [not null]
 }
@@ -56,7 +55,6 @@ Table ExternalStudentAccount {
 Table Parent {
   id Int [pk, increment]
   email String [unique, not null]
-  password String [not null]
   phoneNumber String [not null]
   userId Int [unique, not null]
   user User [not null]
@@ -66,7 +64,6 @@ Table Parent {
 Table Coordinator {
   id Int [pk, increment]
   email String [unique, not null]
-  password String [not null]
   phoneNumber String [not null]
   userId Int [unique, not null]
   user User [not null]
@@ -75,7 +72,6 @@ Table Coordinator {
 Table Admin {
   id Int [pk, increment]
   email String [unique, not null]
-  password String [not null]
   phoneNumber String [not null]
   userId Int [unique, not null]
   user User [not null]

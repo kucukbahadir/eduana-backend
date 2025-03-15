@@ -26,10 +26,12 @@ enum UserType {
 model User {
   id               Int       @id @default(autoincrement())
   name             String
+  username         String    @unique
+  password         String
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   resetToken       String?
-  resetTokenExpiry String?
+  resetTokenExpiry DateTime?
 
   role             UserType
 
@@ -44,7 +46,6 @@ model User {
 model Teacher {
   id           Int        @id @default(autoincrement())
   email        String     @unique
-  password     String
   phoneNumber  String
   
   // Relation to User table
@@ -57,7 +58,6 @@ model Teacher {
 
 model Student {
   id                 Int                      @id @default(autoincrement())
-  loginCode          Int                      @unique
   age                Int?
   languagePreference String?
   dietRestrictions   String?
@@ -90,7 +90,6 @@ model ExternalStudentAccount {
 model Parent {
   id          Int             @id @default(autoincrement())
   email       String          @unique
-  password    String
   phoneNumber String
   
   // Relation to User table
@@ -104,7 +103,6 @@ model Parent {
 model Coordinator {
   id          Int      @id @default(autoincrement())
   email       String   @unique
-  password    String
   phoneNumber String
   
   // Relation to User table
@@ -115,7 +113,6 @@ model Coordinator {
 model Admin {
   id          Int      @id @default(autoincrement())
   email       String   @unique
-  password    String
   phoneNumber String
   
   // Relation to User table
