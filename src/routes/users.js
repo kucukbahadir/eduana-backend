@@ -1,16 +1,26 @@
 const express = require("express");
-const UserController = require("../controllers/UserController");
+const UserController = require("../controllers/userController");
 const { authenticateUser } = require("../middelware/authMiddleware");
 const {
-    adminMiddleware,
-    teacherMiddleware,
-    parentMiddleware,
-    studentMiddleware,
-    coordinatorMiddleware
+  adminMiddleware,
+  teacherMiddleware,
+  parentMiddleware,
+  studentMiddleware,
+  coordinatorMiddleware,
 } = require("../middelware/rbacMiddlewares");
 
 const router = express.Router();
 
+router.get("/:userId", (req, res) => UserController.getUser(req, res));
+router.put("/:userId/role", (req, res) => UserController.updateRole(req, res)); // Admin only
+
+// TODO: Update student profile for a user record
+// TODO: Update parent profile for a user record
+// TODO: Update teacher profile for a user record
+// TODO: Update coordinator profile for a user record
+// TODO: Update admin profile for a user record
+
+/*
 // Public routes (No authentication required)
 router.post('/reset-password', (req, res) => UserController.requestPasswordReset(req, res));
 router.put('/update-password/:token', (req, res) => UserController.changePassword(req, res));
@@ -24,5 +34,6 @@ router.get('/', authenticateUser, (req, res) => UserController.getUserDetails(re
 
 // Example: Protecting a route for teachers only
 // router.get('/teacher-dashboard', authenticateUser, teacherMiddleware, (req, res) => UserController.teacherDashboard(req, res));
+*/
 
 module.exports = router;
