@@ -17,11 +17,11 @@ const UserService = require("../services/userService");
  * 
  * @example
  * // Require admin role
- * router.get('/admin-only', hasRoleMiddleware('admin'), adminController.method);
+ * router.get('/admin-only', hasRoleMiddleware('ADMIN'), adminController.method);
  * 
  * @example
  * // Require either admin or teacher role
- * router.get('/protected', hasRoleMiddleware(['admin', 'teacher']), controller.method);
+ * router.get('/protected', hasRoleMiddleware(['ADMIN', 'TEACHER']), controller.method);
  */
 function hasRoleMiddleware(requiredRoles) {
   const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
