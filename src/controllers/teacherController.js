@@ -40,6 +40,48 @@ class TeacherController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  /**
+   * Retrieves all students associated with a specific teacher.
+   * 
+   * @async
+   * @function getStudents
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - Request parameters
+   * @param {string} req.params.teacherId - Teacher ID to lookup
+   * @param {Object} res - Express response object
+   * @returns {Object} JSON response with students array or error message
+   * @throws {Error} If there's an issue retrieving the students
+   * 
+   * @example
+   * // Returns status 200 with students data
+   * // { students: [...] }
+   * 
+   * @example
+   * // Returns status 400 if teacher ID is missing or invalid
+   * // { message: "Teacher ID is required" } or { message: "Invalid teacher ID" }
+   * 
+   * @example
+   * // Returns status 404 if teacher not found or no students found
+   * // { message: "Teacher not found" } or { message: "No students found" }
+   */
+  async getStudents(req, res) {
+    try {
+      const teacherId = req.params.teacherId;
+      if (!teacherId) return res.status(400).json({ message: "Teacher ID is required" });
+      if (isNaN(teacherId)) return res.status(400).json({ message: "Invalid teacher ID" });
+
+      const teacher = await TeacherService.findById(parseInt(teacherId));
+      if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+
+      const students = await TeacherService.getStudents(parseInt(teacherId));
+      
+      return res.status(200).json({ students });
+    } catch (error) {
+      console.error("Error getting students: ", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 
 module.exports = new TeacherController();
