@@ -48,6 +48,7 @@ Table Student {
 Table ExternalStudentAccount {
   id Int [pk, increment]
   username String [not null]
+  password String [not null]
   studentId Int [not null]
   student Student [not null]
 }
