@@ -1,8 +1,8 @@
 const express = require('express');
 const healthCheckerRouter = require('./routes/healthchecker');
-const usersRouter = require('./routes/users');
-const studentRouter = require('./routes/students')
-const adminRouter = require("./routes/admin");
+const userRoutes = require('./routes/users');
+const classRoutes = require('./routes/classes');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 app.use(express.json());
@@ -13,8 +13,8 @@ app.use(cors());
 
 // Existing health checker route
 app.use("/api", healthCheckerRouter);
-app.use("/api/users", usersRouter);
-app.use("/api/students", studentRouter)
-app.use("/api/admin", adminRouter);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/classes", classRoutes);
 
 module.exports = app;
