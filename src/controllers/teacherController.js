@@ -42,6 +42,34 @@ class TeacherController {
   }
 
   /**
+   * Gets all classes for a specific teacher
+   * @async
+   * @param {Object} req - Express request object
+   * @param {Object} req.params - Request parameters
+   * @param {string} req.params.teacherId - ID of the teacher to get classes for
+   * @param {Object} res - Express response object
+   * @returns {Promise<Object>} - JSON response with classes or error message
+   * @throws {Error} - If there's an error retrieving the classes
+   */
+  async getClasses(req, res) {
+    try {
+      const teacherId = req.params.teacherId;
+      if (!teacherId) return res.status(400).json({ message: "Teacher ID is required" });
+      if(isNaN(teacherId)) return res.status(400).json({ message: "Invalid Teacher ID" });
+
+      const teacher = await TeacherService.findById(parseInt(teacherId));
+      if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+  
+      const classes = await TeacherService.getClassesByTeacherId(parseInt(teacherId));
+      
+      return res.status(200).json(classes);
+    } catch (error) {
+      console.error("Error getting classes: ", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  /**
    * Retrieves all students associated with a specific teacher.
    * 
    * @async
@@ -74,7 +102,7 @@ class TeacherController {
       const teacher = await TeacherService.findById(parseInt(teacherId));
       if (!teacher) return res.status(404).json({ message: "Teacher not found" });
 
-      const students = await TeacherService.getStudents(parseInt(teacherId));
+      const students = await TeacherService.getStudentsByTeacherId(parseInt(teacherId));
       
       return res.status(200).json({ students });
     } catch (error) {

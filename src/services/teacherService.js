@@ -14,36 +14,62 @@ class TeacherService {
   async createTeacherProfile(email, phoneNumber, userId) {
     await prisma.teacher.create({
       data: {
-        email, 
-        phoneNumber, 
-        userId
-      }
-    })
+        email,
+        phoneNumber,
+        userId,
+      },
+    });
   }
 
   /**
-   * Finds a teacher by their ID.
-   * 
+   * Retrieves a teacher by their ID, including associated user information.
+   *
    * @async
-   * @param {string|number} teacherId - The ID of the teacher to find.
-   * @returns {Promise<Object>} The teacher object with user data included.
-   * @throws {Error} If the teacher cannot be found or another error occurs.
+   * @param {string|number} teacherId - The unique identifier of the teacher to find
+   * @returns {Promise<Object|null>} The teacher object with included user data if found, null otherwise
+   * @throws {Error} If there's a database error during the operation
    */
   async findById(teacherId) {
     return await prisma.teacher.findUnique({
       where: { id: teacherId },
-      include: { user: true }
+      include: { user: true },
     });
   }
 
+  /**
+   * Retrieves all classes taught by a specific teacher.
+   * 
+   * @async
+   * @param {string|number} teacherId - The unique identifier of the teacher.
+   * @returns {Promise<Array>} An array of class objects with their associated sessions, evaluations, announcements, enrollments, and teachings.
+   * @throws {Error} If there's an issue with the database query.
+   */
+  async getClassesByTeacherId(teacherId) {
+    const teachings = await prisma.teaching.findMany({
+      where: { teacherId },
+      include: {
+        class: {
+          include: {
+            sessions: true,
+            evaluations: true,
+            announcements: true,
+            enrollments: true,
+            teachings: true,
+          },
+        },
+      },
+    });
+
+    return teachings.map((teaching) => teaching.class);
+  }
 
   /**
    * Retrieves all students taught by a specific teacher.
-   * 
+   *
    * @async
    * @param {number|string} teacherId - The ID of the teacher whose students are being retrieved
    * @returns {Promise<Array>} A promise that resolves to an array of student objects with their associated user data
-   * 
+   *
    * @description
    * This function:
    * 1. Finds all teaching records associated with the teacher
@@ -51,39 +77,37 @@ class TeacherService {
    * 3. Queries all students enrolled in those classes
    * 4. Returns distinct student records with their user information
    */
-  async getStudents(teacherId) {
+  async getStudentsByTeacherId(teacherId) {
     const teachings = await prisma.teaching.findMany({
       where: { teacherId },
       include: {
         session: {
           select: {
-            classId: true
-          }
-        }
-      }
+            classId: true,
+          },
+        },
+      },
     });
-    
+
     // Extract all class IDs the teacher teaches
-    const classIds = teachings
-      .map(teaching => teaching.session.classId)
-      .filter(Boolean); // Remove any null/undefined values
-    
+    const classIds = teachings.map((teaching) => teaching.session.classId).filter(Boolean); // Remove any null/undefined values
+
     const students = await prisma.student.findMany({
       where: {
         enrollments: {
           some: {
             classId: {
-              in: classIds
-            }
-          }
-        }
+              in: classIds,
+            },
+          },
+        },
       },
       include: {
-        user: true
+        user: true,
       },
-      distinct: ['id']
+      distinct: ["id"],
     });
-    
+
     return students;
   }
 }
