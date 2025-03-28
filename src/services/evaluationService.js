@@ -7,52 +7,43 @@ const prisma = new PrismaClient();
  * @async
  * @function createEvaluations
  * @param {number} teacherId - The ID of the teacher submitting the evaluations
+ * @param {number} sessionId - The ID of the session being evaluated
  * @param {Array} evaluations - Array of evaluation objects
  * @returns {Promise<Object[]>} - Returns created evaluation records
  * @throws {Error} If database insertion fails
  */
-async function createEvaluations(teacherId, evaluations) {
+async function createEvaluations(teacherId, sessionId, evaluations) {
     try {
         const savedEvaluations = [];
 
-        for (const eval of evaluations) {
+        // Ensure session exists
+        const session = await prisma.session.findUnique({ where: { id: sessionId } });
+        if (!session) {
+            throw new Error("Session not found.");
+        }
+
+        for (const evaluationData of evaluations) {
             // Ensure student exists
-            const student = await prisma.student.findFirst({ where: { user: { name: eval.name } } });
+            const student = await prisma.student.findUnique({ where: { id: evaluationData.studentId } });
             if (!student) {
-                throw new Error(`Student ${eval.name} not found`);
-            }
-
-            // Find the class ID for the teacher (modify this logic as needed)
-            const teacherClass = await prisma.class.findFirst({ where: { teacherId: teacherId } });
-            if (!teacherClass) {
-                throw new Error("Teacher is not assigned to any class.");
-            }
-
-            // Get the latest session ID (modify logic if needed)
-            const latestSession = await prisma.session.findFirst({
-                where: { classId: teacherClass.id },
-                orderBy: { id: "desc" }
-            });
-
-            if (!latestSession) {
-                throw new Error("No session found for this class.");
+                throw new Error(`Student with ID ${evaluationData.studentId} not found`);
             }
 
             // Create the Evaluation record
             const evaluation = await prisma.evaluation.create({
                 data: {
                     studentId: student.id,
-                    classId: teacherClass.id,
+                    classId: session.classId, // Use session's class ID directly
                     sessionEvaluations: {
                         create: {
-                            sessionId: latestSession.id, // Ensure the session ID is recorded
-                            active: eval.attendance === "Present" ? 1 : 0,
-                            independent: eval.independence || "FREQUENTLY_SEEKS_HELP",
-                            completion: eval.taskCompletion || "RARELY",
-                            creativity: eval.creativity || "MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES",
-                            persistency: eval.persistence || "AVERAGE",
-                            adherence: eval.adherence || "USUALLY_COMPLIED",
-                            notes: eval.notes || null,
+                            sessionId: session.id, // Use passed session ID
+                            active: evaluationData.attendance === "Present" ? 1 : 0,
+                            independent: evaluationData.independence || "FREQUENTLY_SEEKS_HELP",
+                            completion: evaluationData.taskCompletion || "RARELY",
+                            creativity: evaluationData.creativity || "MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES",
+                            persistency: evaluationData.persistence || "AVERAGE",
+                            adherence: evaluationData.adherence || "USUALLY_COMPLIED",
+                            notes: evaluationData.notes || null,
                         },
                     },
                 },

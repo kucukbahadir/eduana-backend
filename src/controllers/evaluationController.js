@@ -23,21 +23,23 @@ async function submitEvaluation(req, res) {
         const teacher = await TeacherService.findById(parseInt(teacherId));
         if (!teacher) return res.status(404).json({ message: "Teacher not found" });
 
-        const evaluations = req.body; // Array of student evaluations
+        const {sessionId, evaluations} = req.body;
 
-        // Validate request body
-        if (!Array.isArray(evaluations) || evaluations.length === 0) {
-            return res.status(400).json({ message: "Evaluation data is required and must be an array" });
+        if (!sessionId || isNaN(sessionId)) {
+            return res.status(400).json({message: "Valid session ID is required"});
         }
 
-        // Process evaluations
-        const result = await evaluationService.createEvaluations(teacherId, evaluations);
+        if (!Array.isArray(evaluations) || evaluations.length === 0) {
+            return res.status(400).json({message: "Evaluation data is required and must be an array"});
+        }
 
-        return res.status(201).json({ message: "Evaluations submitted successfully", result });
+        const result = await evaluationService.createEvaluations(teacherId, sessionId, evaluations);
+
+        return res.status(201).json({message: "Evaluations submitted successfully", result});
     } catch (error) {
         console.error("Error submitting evaluation: ", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({message: "Internal server error", error: error.message});
     }
 }
 
-module.exports = { submitEvaluation };
+module.exports = {submitEvaluation};

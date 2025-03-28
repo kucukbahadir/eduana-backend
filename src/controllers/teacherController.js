@@ -95,12 +95,12 @@ class TeacherController {
    */
   async getStudents(req, res) {
     try {
-      const teacherId = req.params.teacherId;
-      if (!teacherId) return res.status(400).json({ message: "Teacher ID is required" });
-      if (isNaN(teacherId)) return res.status(400).json({ message: "Invalid teacher ID" });
+        const teacherId = req.params.teacherId;
+        if (!teacherId) return res.status(400).json({ message: "Teacher ID is required" });
+        if (isNaN(teacherId)) return res.status(400).json({ message: "Invalid teacher ID" });
 
-      const teacher = await TeacherService.findById(parseInt(teacherId));
-      if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+        const teacher = await TeacherService.findById(parseInt(teacherId));
+        if (!teacher) return res.status(404).json({ message: "Teacher not found" });
 
       const students = await TeacherService.getStudentsByTeacherId(parseInt(teacherId));
       
