@@ -5,5 +5,7 @@ const router = express.Router();
 
 router.get("/:teacherId/classes", (req, res) => TeacherController.getClasses(req, res));
 router.get("/:teacherId/students", (req, res) => TeacherController.getStudents(req, res));
+router.get("/:teacherId/courses",( req, res) => TeacherController.getAllCourses(req, res));
 
+router.post("/:teacherId/sessions/:sessionId/evaluation", (req, res) => {EvaluationController.submitEvaluation(req, res)});
 module.exports = router;
