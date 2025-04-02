@@ -88,6 +88,51 @@ class AuthService {
       });
     });
   }
+
+  async login(username, password) {
+    if (!username || !password) {
+      throw new Error("Username and password are required");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { username },
+      include: {
+        student: true,
+        teacher: true,
+        parent: true,
+        coordinator: true,
+        admin: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Invalid credentials");
+    }
+
+    const token = jwt.sign(
+        { userId: user.id, role: user.role },
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: "2h" }
+    );
+
+    // Role-based redirection
+    const redirectRoutes = {
+      student: "/dashboard/student",
+      parent: "/dashboard/parent",
+      teacher: "/dashboard/teacher",
+      coordinator: "/dashboard/coordinator",
+      admin: "/dashboard/admin",
+    };
+
+    const redirect = redirectRoutes[user.role.toLowerCase()] || "/";
+
+    return { token, redirect };
+  }
 }
 
 module.exports = new AuthService();
