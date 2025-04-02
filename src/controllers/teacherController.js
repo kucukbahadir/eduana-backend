@@ -111,6 +111,36 @@ class TeacherController {
         }
     }
 
+    async getCourseInfoById(req, res) {
+        try {
+            const {teacherId, courseId} = req.params;
+
+            if (!teacherId || isNaN(teacherId)) {
+                return res.status(400).json({message: "Invalid or missing teacher ID"});
+            }
+
+            if (!courseId || isNaN(courseId)) {
+                return res.status(400).json({message: "Invalid or missing course ID"});
+            }
+
+            const teacher = await TeacherService.findById(parseInt(teacherId));
+            if (!teacher) {
+                return res.status(404).json({message: "Teacher not found"});
+            }
+
+            const course = await TeacherService.getCourseInfoById(parseInt(courseId));
+            if (!course) {
+                return res.status(404).json({message: "Course not found"});
+            }
+
+            return res.status(200).json({course});
+
+        } catch (error) {
+            console.error("Error getting course info:", error);
+            return res.status(500).json({message: "Internal server error"});
+        }
+    }
+
     async getAllCourses(req, res) {
         try {
             const teacherId = req.params.teacherId;
@@ -128,6 +158,5 @@ class TeacherController {
         }
     }
 }
-
 
 module.exports = new TeacherController();
