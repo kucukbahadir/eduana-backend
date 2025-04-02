@@ -1,5 +1,6 @@
 const express = require("express");
 const TeacherController = require("../controllers/teacherController");
+const EvaluationController = require("../controllers/evaluationController");
 const { authenticateUser } = require("../middelware/authMiddleware");
 const { hasRole } = require("../middelware/rbacMiddlewares");
 
