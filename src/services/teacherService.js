@@ -110,6 +110,26 @@ class TeacherService {
 
     return students;
   }
+
+  async getCourseInfoById(courseId) {
+    const course = await prisma.class.findUnique({
+      where: { id: courseId },
+      include: {
+        sessions: true, // Include related sessions
+        enrollments: {
+          include: {
+            student: true, // Include enrolled students
+          },
+        },
+        teachings: {
+          include: {
+            teacher: true, // Include teacher details
+          },
+        },
+      },
+    });
+    return course;
+  }
 }
 
 module.exports = new TeacherService();
