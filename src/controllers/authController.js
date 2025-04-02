@@ -11,39 +11,49 @@ const AdminController = require("./adminController");
 const SALT_ROUNDS = 10;
 
 class AuthController {
-
   /**
-   * Authenticates a user by verifying their username and password, and generates a JWT token for authorization.
+   * Authenticates a user and generates a JWT token for authorization.
    *
    * @async
    * @function loginUser
    * @param {Object} req - Express request object
    * @param {Object} req.body - Request body
-   * @param {string} req.body.username - The user's username
-   * @param {string} req.body.password - The user's password
+   * @param {string} req.body.username - Student's username (if logging in as a student)
+   * @param {string} req.body.email - User's email (if logging in as a parent, teacher, coordinator, or admin)
+   * @param {string} req.body.password - User's password
    * @param {Object} res - Express response object
-   * @returns {Object} JSON response with success message, token, and redirect URL
+   * @returns {Object} JSON response with token and redirect URL
    * @throws {Error} When there's an issue with the authentication process
    *
+   * @description
+   * This function validates user credentials based on role:
+   * - Students authenticate using username and password.
+   * - All other users authenticate using email and password.
+   * It generates a JWT token and determines the appropriate redirect URL.
+   *
    * Possible HTTP responses:
-   * - 200: Login successful, returning a JWT token and a role-specific redirect URL.
-   * - 400: Missing username or password, or invalid user type.
-   * - 401: Invalid credentials or authentication failure.
-   * - 500: Internal server error, in case of issues during the authentication process.
+   * - 200: Login successful with token and redirect URL
+   * - 401: Invalid credentials
    */
-
   async loginUser(req, res) {
     try {
-      const { username, password } = req.body;
+      const { userType, username, email, password } = req.body;
 
-      const { token, redirect } = await AuthService.login(username, password);
+      const { token, redirect } = await AuthService.login(userType, username, email, password);
 
-      return res.status(200).json({ success: true, message: "Login successful", token, redirect });
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token,
+        redirect,
+      });
     } catch (error) {
       console.error("Login Error:", error.message);
       return res.status(401).json({ error: error.message || "Authentication failed" });
     }
   }
+
+
 
   /**
    * Registers a new user in the system with their profile data

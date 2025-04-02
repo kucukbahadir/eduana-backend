@@ -2,6 +2,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const emailConfig = require("../config/emailConfig");
 const nodemailer = require("nodemailer");
+const {compare} = require("bcrypt");
+const {sign} = require("jsonwebtoken");
 
 class AuthService {
   /**
@@ -32,7 +34,7 @@ class AuthService {
    */
   async updateResetToken(id, token, tokenExpiry) {
     return await prisma.user.update({
-      where: { id },
+      where: {id},
       data: {
         resetToken: token,
         resetTokenExpiry: tokenExpiry,
@@ -42,7 +44,7 @@ class AuthService {
 
   /**
    * Resets a user's password and clears the reset token information.
-   * 
+   *
    * @async
    * @param {Object} user - The user object containing the user's ID.
    * @param {String} password - The new password to set for the user (already hashed).
@@ -50,7 +52,7 @@ class AuthService {
    */
   async resetPassword(user, password) {
     await prisma.user.update({
-      where: { id: user.id },
+      where: {id: user.id},
       data: {
         password,
         resetToken: null,
@@ -89,38 +91,69 @@ class AuthService {
     });
   }
 
-  async login(username, password) {
-    if (!username || !password) {
-      throw new Error("Username and password are required");
+
+  async login(userType, username, email, password) {
+    if (!password || (!username && !email)) {
+      throw new Error("Username or Email and password are required");
     }
 
-    const user = await prisma.user.findUnique({
-      where: { username },
-      include: {
-        student: true,
-        teacher: true,
-        parent: true,
-        coordinator: true,
-        admin: true,
-      },
-    });
+    let user;
 
-    if (!user) {
-      throw new Error("Invalid credentials");
+    // If the user type is 'student', look up by username in the User model
+    if (userType.toLowerCase() === "student") {
+      user = await prisma.user.findUnique({
+        where: { username: username },
+      });
+
+      if (!user) {
+        throw new Error("Invalid credentials");
+      }
+    } else {
+      // For other user types, look up by email in the respective model
+      if (userType.toLowerCase() === "teacher") {
+        user = await prisma.teacher.findUnique({
+          where: { email: email },
+          include: { user: true },
+        });
+      } else if (userType.toLowerCase() === "parent") {
+        user = await prisma.parent.findUnique({
+          where: { email: email },
+          include: { user: true },
+        });
+      } else if (userType.toLowerCase() === "coordinator") {
+        user = await prisma.coordinator.findUnique({
+          where: { email: email },
+          include: { user: true },
+        });
+      } else if (userType.toLowerCase() === "admin") {
+        user = await prisma.admin.findUnique({
+          where: { email: email },
+          include: { user: true },
+        });
+      }
+
+      if (!user) {
+        throw new Error("Invalid credentials");
+      }
+
+      // The user is in the related table, but we want to use the `User` model's password
+      user = user.user;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Check if the password is valid
+    const isPasswordValid = await compare(password, user.password);
     if (!isPasswordValid) {
       throw new Error("Invalid credentials");
     }
 
-    const token = jwt.sign(
+    // Generate a JWT token for the authenticated user
+    const token = sign(
         { userId: user.id, role: user.role },
         process.env.JWT_SECRET_KEY,
         { expiresIn: "2h" }
     );
 
-    // Role-based redirection
+    // Define the redirection routes for different user roles
     const redirectRoutes = {
       student: "/dashboard/student",
       parent: "/dashboard/parent",
@@ -133,6 +166,7 @@ class AuthService {
 
     return { token, redirect };
   }
+
 }
 
-module.exports = new AuthService();
+  module.exports = new AuthService();
