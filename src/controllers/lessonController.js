@@ -11,7 +11,7 @@ class LessonController {
     async getNextLesson(req, res) {
         try {
             // Extract teacher ID from the authenticated user in JWT token
-            const teacherId = req.user.teacherId;
+            const teacherId = req.params.teacherId;
 
             if (!teacherId) {
                 return res.status(403).json({ message: "Unauthorized: Teacher ID missing" });
