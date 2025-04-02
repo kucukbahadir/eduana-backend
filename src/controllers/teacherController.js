@@ -140,6 +140,23 @@ class TeacherController {
             return res.status(500).json({message: "Internal server error"});
         }
     }
+
+    async getAllCourses(req, res) {
+        try {
+            const teacherId = req.params.teacherId;
+            if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
+            if (isNaN(teacherId)) return res.status(400).json({message: "Invalid Teacher ID"});
+
+            const teacher = await TeacherService.findById(parseInt(teacherId));
+            if (!teacher) return res.status(404).json({message: "Teacher not found"});
+
+            const courses = await TeacherService.getAllCourses(teacherId);
+            return res.status(200).json({courses});
+        } catch (error) {
+            console.error("Error getting courses: ", error);
+            return res.status(500).json({message: "Internal server error"});
+        }
+    }
 }
 
 module.exports = new TeacherController();
