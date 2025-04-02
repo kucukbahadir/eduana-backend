@@ -31,14 +31,14 @@ class TeacherService {
    */
   async findById(teacherId) {
     return await prisma.teacher.findUnique({
-      where: { id: teacherId },
-      include: { user: true },
+      where: {id: teacherId},
+      include: {user: true},
     });
   }
 
   /**
    * Retrieves all classes taught by a specific teacher.
-   * 
+   *
    * @async
    * @param {string|number} teacherId - The unique identifier of the teacher.
    * @returns {Promise<Array>} An array of class objects with their associated sessions, evaluations, announcements, enrollments, and teachings.
@@ -46,7 +46,7 @@ class TeacherService {
    */
   async getClassesByTeacherId(teacherId) {
     const teachings = await prisma.teaching.findMany({
-      where: { teacherId },
+      where: {teacherId},
       include: {
         class: {
           include: {
@@ -79,7 +79,7 @@ class TeacherService {
    */
   async getStudentsByTeacherId(teacherId) {
     const teachings = await prisma.teaching.findMany({
-      where: { teacherId },
+      where: {teacherId},
       include: {
         session: {
           select: {
@@ -109,6 +109,73 @@ class TeacherService {
     });
 
     return students;
+  }
+
+  async getAllCourses(teacherId) {
+    try {
+      // Find all the teachings for the teacher, and include related class, curriculum, and lessons
+      const teachings = await prisma.teaching.findMany({
+        where: { teacherId },
+        include: {
+          class: {
+            include: {
+              curriculum: true,   // Include curriculum related to each class
+              sessions: true,     // Include sessions related to each class
+            },
+          },
+        },
+      });
+
+      // Extract the classes (courses) from the teachings
+      const courses = teachings.map(teaching => {
+        return {
+          classId: teaching.class.id,
+          title: teaching.class.title,
+          description: teaching.class.description,
+          curriculum: teaching.class.curriculum ? {
+            title: teaching.class.curriculum.title,
+            description: teaching.class.curriculum.description,
+            field: teaching.class.curriculum.field,
+            type: teaching.class.curriculum.type,
+            level: teaching.class.curriculum.level,
+            lessons: teaching.class.curriculum.lessons.map(lesson => ({
+              lessonId: lesson.id,
+              title: lesson.title,
+            })),
+          } : null,
+          sessions: teaching.class.sessions.map(session => ({
+            sessionId: session.id,
+            start: session.start,
+            end: session.end,
+          })),
+        };
+      });
+
+      return courses;
+    } catch (error) {
+      console.error("Error fetching courses for teacher: ", error);
+      throw new Error("Failed to fetch courses");
+    }
+  }
+
+  async getCourseInfoById(courseId) {
+    const course = await prisma.class.findUnique({
+      where: { id: courseId },
+      include: {
+        sessions: true, // Include related sessions
+        enrollments: {
+          include: {
+            student: true, // Include enrolled students
+          },
+        },
+        teachings: {
+          include: {
+            teacher: true, // Include teacher details
+          },
+        },
+      },
+    });
+    return course;
   }
 }
 
