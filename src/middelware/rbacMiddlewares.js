@@ -1,30 +1,51 @@
+const { UserType } = require("@prisma/client");
 const UserService = require("../services/userService");
 
+
 /**
- * Middleware function that checks if a user has the required role.
+ * Middleware that checks if the authenticated user has one of the required roles.
  * 
- * @param {string} requiredRole - The role that the user must have to access the route
+ * @param {UserType|Array<UserType>} requiredRoles - The role(s) required to access the route
  * @returns {Function} Express middleware function that:
- *   - Checks if the user exists in the request
- *   - Retrieves the user's role from the database
- *   - Verifies if the user has the required role
- *   - Calls next() if authorized or returns appropriate error responses
+ *  - Checks if user is authenticated
+ *  - Verifies user exists in the database
+ *  - Ensures user has one of the required roles
+ *  - Returns appropriate status codes and error messages if checks fail:
+ *    - 401 if no user is authenticated or user not found in database
+ *    - 403 if user doesn't have required role(s)
+ *    - 500 if database error occurs
  * 
- * @throws {Error} Returns 401 if no user is found in the request or database
- * @throws {Error} Returns 403 if the user doesn't have the required role
- * @throws {Error} Returns 500 if there's a database error
+ * @example
+ * // Require admin role
+ * router.get('/admin-only', hasRoleMiddleware('ADMIN'), adminController.method);
+ * 
+ * @example
+ * // Require either admin or teacher role
+ * router.get('/protected', hasRoleMiddleware(['ADMIN', 'TEACHER']), controller.method);
  */
-function roleMiddleware(requiredRole) {
+function hasRoleMiddleware(requiredRoles) {
+  const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+  
   return async (req, res, next) => {
     if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized: No user found" });
 
     try {
-      const user = await UserService.findRoleById(req.user.id);
+      const user = await UserService.findById(req.user.id);
       
       if (!user) return res.status(401).json({ message: "Unauthorized: User not found" });
-      if (user.role !== requiredRole) return res.status(403).json({ message: `Forbidden: Only ${requiredRole}s allowed` });
+      
+      // Check if user's role is included in the array of required roles
+      if (!roles.includes(user.role)) {
+        const rolesString = roles.length > 1 
+          ? roles.slice(0, -1).join(', ') + ' or ' + roles.slice(-1) 
+          : roles[0];
+        
+        return res.status(403).json({ 
+          message: `Forbidden: Only ${rolesString.toLowerCase()} allowed` 
+        });
+      }
 
-      next(); // User has the correct role, proceed
+      next();
     } catch (error) {
       console.error("RBAC Database Error:", error.message);
       res.status(500).json({ message: "Internal Server Error" });
@@ -32,11 +53,6 @@ function roleMiddleware(requiredRole) {
   };
 }
 
-// Export specific role-based middlewares
 module.exports = {
-  adminMiddleware: roleMiddleware("ADMIN"),
-  teacherMiddleware: roleMiddleware("TEACHER"),
-  parentMiddleware: roleMiddleware("PARENT"),
-  studentMiddleware: roleMiddleware("STUDENT"),
-  coordinatorMiddleware: roleMiddleware("COORDINATOR"),
+  hasRole: hasRoleMiddleware
 };
