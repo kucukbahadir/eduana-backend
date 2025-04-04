@@ -78,6 +78,7 @@ class TeacherService {
     return uniqueClasses;
   }
 
+
   /**
    * Retrieves all students taught by a specific teacher.
    *
@@ -93,8 +94,9 @@ class TeacherService {
    * 4. Returns distinct student records with their user information
    */
   async getStudentsByTeacherId(teacherId) {
+    // Get all sessions taught by the teacher, and extract class IDs
     const teachings = await prisma.teaching.findMany({
-      where: {teacherId},
+      where: { teacherId },
       include: {
         session: {
           select: {
@@ -105,8 +107,11 @@ class TeacherService {
     });
 
     // Extract all class IDs the teacher teaches
-    const classIds = teachings.map((teaching) => teaching.session.classId).filter(Boolean); // Remove any null/undefined values
+    const classIds = teachings
+        .map((teaching) => teaching.session?.classId)
+        .filter(Boolean); // Removes null or undefined
 
+    // Now get all students enrolled in those classes
     const students = await prisma.student.findMany({
       where: {
         enrollments: {
@@ -118,9 +123,15 @@ class TeacherService {
         },
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,      // <--- Include name explicitly
+            username: true,  // optional if needed
+          },
+        },
       },
-      distinct: ["id"],
+      distinct: ['id'], // Ensure uniqueness
     });
 
     return students;

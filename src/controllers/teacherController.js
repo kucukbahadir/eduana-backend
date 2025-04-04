@@ -95,7 +95,7 @@ class TeacherController {
      */
     async getStudents(req, res) {
         try {
-            const teacherId = req.params.teacherId;
+            const teacherId = req.user.teacher.id;
             if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
             if (isNaN(teacherId)) return res.status(400).json({message: "Invalid teacher ID"});
 
