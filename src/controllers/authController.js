@@ -1,7 +1,6 @@
 const AuthService = require("../services/authService");
 const UserService = require("../services/userService");
 const { UserType } = require("@prisma/client");
-const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const StudentController = require("./studentController");
@@ -14,67 +13,48 @@ const SALT_ROUNDS = 10;
 class AuthController {
   /**
    * Authenticates a user and generates a JWT token for authorization.
-   * 
+   *
    * @async
    * @function loginUser
    * @param {Object} req - Express request object
    * @param {Object} req.body - Request body
-   * @param {string} req.body.username - User's username
+   * @param {string} req.body.username - Student's username (if logging in as a student)
+   * @param {string} req.body.email - User's email (if logging in as a parent, teacher, coordinator, or admin)
    * @param {string} req.body.password - User's password
    * @param {Object} res - Express response object
    * @returns {Object} JSON response with token and redirect URL
    * @throws {Error} When there's an issue with the authentication process
-   * 
+   *
    * @description
-   * This function validates user credentials, determines the appropriate 
-   * redirect URL based on the user's role, and generates a JWT token for 
-   * authenticated sessions. The token contains the user ID and role.
-   * 
+   * This function validates user credentials based on role:
+   * - Students authenticate using username and password.
+   * - All other users authenticate using email and password.
+   * It generates a JWT token and determines the appropriate redirect URL.
+   *
    * Possible HTTP responses:
    * - 200: Login successful with token and redirect URL
-   * - 400: Missing username/password or invalid user type
    * - 401: Invalid credentials
-   * - 500: Server error
    */
   async loginUser(req, res) {
     try {
-      const { username, password } = req.body;
-      let redirect = null;
+      const { userType, username, email, password } = req.body;
 
-      if (!username) return res.status(400).json({ message: "Username is required" });
-      if (!password) return res.status(400).json({ message: "Password is required" });
+      const { token, redirect } = await AuthService.login(userType, username, email, password);
 
-      const user = await UserService.findByUsername(username);
-      if (!user) return res.status(401).json({ message: "Invalid credentials" });
-      
-      switch (user.role.toLowerCase()) {
-        case "student": redirect = "/dashboard/student"; break;
-        case "parent": redirect = "/dashboard/parent"; break;
-        case "teacher": redirect = "/dashboard/teacher"; break;
-        case "coordinator": redirect = "/dashboard/coordinator"; break;
-        case "admin": redirect = "/dashboard/admin"; break;
-        default: return res.status(400).json({ message: "Invalid user type" });
-      }
-
-      const authenticated = await bcrypt.compare(password, user.password);
-      if (!authenticated) return res.status(401).json({ message: "Invalid credentials" });
-
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          role: user.role,
-        },
-        process.env.JWT_SECRET_KEY,
-        { expiresIn: "2h" }
-      );
-
-      return res.status(200).json({ success: true, message: "Login successful", token, redirect });
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token,
+        redirect,
+      });
     } catch (error) {
-      console.error("Error logging in user:", error);
-      return res.status(500).json({ error: "Internal server error" });
+      console.error("Login Error:", error.message);
+      return res.status(401).json({ error: error.message || "Authentication failed" });
     }
   }
-  
+
+
+
   /**
    * Registers a new user in the system with their profile data
    * @async
@@ -102,7 +82,7 @@ class AuthController {
         return res.status(400).json({ message: "Invalid user type" });
 
       if (!password) return res.status(400).json({ message: "Password is required" });
-      if (userType.toLowerCase() != "student") {
+      if (userType.toLowerCase() !== "student") {
         if (password.length < 8) return res.status(400).json({ message: "Password must be at least 8 characters" });
         if (!/[A-Z]/.test(password)) return res.status(400).json({ message: "Password must contain at least one uppercase letter" });
         if (!/[0-9]/.test(password)) return res.status(400).json({ message: "Password must contain at least one number" });
