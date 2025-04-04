@@ -53,7 +53,7 @@ class TeacherController {
      */
     async getClasses(req, res) {
         try {
-            const teacherId = req.params.teacherId;
+            const teacherId = req.user.teacher.id;
             if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
             if (isNaN(teacherId)) return res.status(400).json({message: "Invalid Teacher ID"});
 
@@ -144,7 +144,6 @@ class TeacherController {
     async getAllCourses(req, res) {
         try {
             const teacherId = req.user.teacher.id;
-            console.log(teacherId);
             if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
             if (isNaN(teacherId)) return res.status(400).json({message: "Invalid Teacher ID"});
 

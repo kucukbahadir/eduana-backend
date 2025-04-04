@@ -45,8 +45,9 @@ class TeacherService {
    * @throws {Error} If there's an issue with the database query.
    */
   async getClassesByTeacherId(teacherId) {
+    // Fetch teachings data with related class data
     const teachings = await prisma.teaching.findMany({
-      where: {teacherId},
+      where: { teacherId },
       include: {
         class: {
           include: {
@@ -60,7 +61,21 @@ class TeacherService {
       },
     });
 
-    return teachings.map((teaching) => teaching.class);
+    // Extract the unique classes using a Set to filter out duplicates based on the classId
+    const uniqueClasses = [];
+    const classIds = new Set();
+
+    teachings.forEach((teaching) => {
+      const classData = teaching.class;
+
+      // If the class ID is not already in the set, add it to uniqueClasses
+      if (!classIds.has(classData.id)) {
+        classIds.add(classData.id);
+        uniqueClasses.push(classData);
+      }
+    });
+
+    return uniqueClasses;
   }
 
   /**
