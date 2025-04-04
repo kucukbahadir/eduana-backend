@@ -119,8 +119,7 @@ class TeacherService {
         include: {
           class: {
             include: {
-              curriculum: true,   // Include curriculum related to each class
-              sessions: true,     // Include sessions related to each class
+              // Include any additional relations you need here
             },
           },
         },
@@ -143,20 +142,28 @@ class TeacherService {
               title: lesson.title,
             })),
           } : null,
-          sessions: teaching.class.sessions.map(session => ({
-            sessionId: session.id,
-            start: session.start,
-            end: session.end,
-          })),
         };
       });
 
-      return courses;
+      // Deduplicate the courses based on classId, title, and description
+      const uniqueCourses = [];
+      const seenCourses = new Set();
+
+      courses.forEach(course => {
+        const key = `${course.classId}-${course.title}-${course.description}`;
+        if (!seenCourses.has(key)) {
+          seenCourses.add(key);
+          uniqueCourses.push(course);
+        }
+      });
+
+      return uniqueCourses;
     } catch (error) {
       console.error("Error fetching courses for teacher: ", error);
       throw new Error("Failed to fetch courses");
     }
   }
+
 
   async getCourseInfoById(courseId) {
     const course = await prisma.class.findUnique({
