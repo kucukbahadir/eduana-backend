@@ -12,13 +12,18 @@ class TeacherService {
    * @throws {Error} If there is a problem creating the teacher profile
    */
   async createTeacherProfile(email, phoneNumber, userId) {
-    await prisma.teacher.create({
-      data: {
-        email,
-        phoneNumber,
-        userId,
-      },
-    });
+    try {
+      await prisma.teacher.create({
+        data: {
+          email,
+          phoneNumber,
+          userId,
+        },
+      });
+    } catch (err) {
+      console.error("Error creating teacher profile:", err);
+      throw new Error("Unable to create teacher profile");
+    }
   }
 
   /**
@@ -30,10 +35,15 @@ class TeacherService {
    * @throws {Error} If there's a database error during the operation
    */
   async findById(teacherId) {
-    return await prisma.teacher.findUnique({
-      where: {id: teacherId},
-      include: {user: true},
-    });
+    try {
+      return await prisma.teacher.findUnique({
+        where: { id: teacherId },
+        include: { user: true },
+      });
+    } catch (error) {
+      console.error("Error finding teacher by ID:", error);
+      throw new Error("Unable to retrieve teacher by ID");
+    }
   }
 
   /**
@@ -45,22 +55,27 @@ class TeacherService {
    * @throws {Error} If there's an issue with the database query.
    */
   async getClassesByTeacherId(teacherId) {
-    const teachings = await prisma.teaching.findMany({
-      where: {teacherId},
-      include: {
-        class: {
-          include: {
-            sessions: true,
-            evaluations: true,
-            announcements: true,
-            enrollments: true,
-            teachings: true,
+    try {
+      const teachings = await prisma.teaching.findMany({
+        where: { teacherId },
+        include: {
+          class: {
+            include: {
+              sessions: true,
+              evaluations: true,
+              announcements: true,
+              enrollments: true,
+              teachings: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return teachings.map((teaching) => teaching.class);
+      return teachings.map((teaching) => teaching.class);
+    } catch (error) {
+      console.error("Error fetching classes for teacher:", error);
+      throw new Error("Failed to fetch classes for teacher");
+    }
   }
 
   /**
@@ -78,72 +93,91 @@ class TeacherService {
    * 4. Returns distinct student records with their user information
    */
   async getStudentsByTeacherId(teacherId) {
-    const teachings = await prisma.teaching.findMany({
-      where: {teacherId},
-      include: {
-        session: {
-          select: {
-            classId: true,
-          },
-        },
-      },
-    });
-
-    // Extract all class IDs the teacher teaches
-    const classIds = teachings.map((teaching) => teaching.session.classId).filter(Boolean); // Remove any null/undefined values
-
-    const students = await prisma.student.findMany({
-      where: {
-        enrollments: {
-          some: {
-            classId: {
-              in: classIds,
-            },
-          },
-        },
-      },
-      include: {
-        user: true,
-      },
-      distinct: ["id"],
-    });
-
-    return students;
-  }
-
-  async getAllCourses(teacherId) {
     try {
-      // Find all the teachings for the teacher, and include related class, curriculum, and lessons
       const teachings = await prisma.teaching.findMany({
         where: { teacherId },
         include: {
-          class: {
-            include: {
-              curriculum: true,   // Include curriculum related to each class
-              sessions: true,     // Include sessions related to each class
+          session: {
+            select: {
+              classId: true,
             },
           },
         },
       });
 
-      // Extract the classes (courses) from the teachings
-      const courses = teachings.map(teaching => {
+      // Deduplicate class IDs the teacher teaches
+      const classIds = [...new Set(teachings.map((teaching) => teaching.session.classId).filter(Boolean))];
+
+      const students = await prisma.student.findMany({
+        where: {
+          enrollments: {
+            some: {
+              classId: {
+                in: classIds,
+              },
+            },
+          },
+        },
+        include: {
+          user: true,
+        },
+        distinct: ["id"], // Prisma doesn't support this in all cases, ensure this works for your version
+      });
+
+      return students;
+    } catch (error) {
+      console.error("Error fetching students for teacher:", error);
+      throw new Error("Failed to fetch students for teacher");
+    }
+  }
+
+  /**
+   * Retrieves all courses (classes) taught by a teacher.
+   *
+   * @async
+   * @param {number} teacherId - ID of the teacher
+   * @returns {Promise<Array>} - A list of courses taught by the teacher
+   * @throws {Error} If there is an issue retrieving the courses
+   */
+  async getAllCourses(teacherId) {
+    try {
+      const teachings = await prisma.teaching.findMany({
+        where: { teacherId },
+        include: {
+          class: {
+            include: {
+              curriculum: {
+                include: {
+                  lessons: true,
+                },
+              },
+              sessions: true,
+            },
+          },
+        },
+      });
+
+      // Extract and map courses (classes)
+      const courses = teachings.map((teaching) => {
+        const { class: classInfo } = teaching;
         return {
-          classId: teaching.class.id,
-          title: teaching.class.title,
-          description: teaching.class.description,
-          curriculum: teaching.class.curriculum ? {
-            title: teaching.class.curriculum.title,
-            description: teaching.class.curriculum.description,
-            field: teaching.class.curriculum.field,
-            type: teaching.class.curriculum.type,
-            level: teaching.class.curriculum.level,
-            lessons: teaching.class.curriculum.lessons.map(lesson => ({
-              lessonId: lesson.id,
-              title: lesson.title,
-            })),
-          } : null,
-          sessions: teaching.class.sessions.map(session => ({
+          classId: classInfo.id,
+          title: classInfo.title,
+          description: classInfo.description,
+          curriculum: classInfo.curriculum
+              ? {
+                title: classInfo.curriculum.title,
+                description: classInfo.curriculum.description,
+                field: classInfo.curriculum.field,
+                type: classInfo.curriculum.type,
+                level: classInfo.curriculum.level,
+                lessons: classInfo.curriculum.lessons.map((lesson) => ({
+                  lessonId: lesson.id,
+                  title: lesson.title,
+                })),
+              }
+              : null,
+          sessions: classInfo.sessions.map((session) => ({
             sessionId: session.id,
             start: session.start,
             end: session.end,
@@ -153,30 +187,46 @@ class TeacherService {
 
       return courses;
     } catch (error) {
-      console.error("Error fetching courses for teacher: ", error);
+      console.error("Error fetching courses for teacher:", error);
       throw new Error("Failed to fetch courses");
     }
   }
 
+  /**
+   * Retrieves course information by its ID.
+   *
+   * @async
+   * @param {number} courseId - The ID of the course
+   * @returns {Promise<Object|null>} - The detailed course information, including sessions, students, and teachings
+   * @throws {Error} If there is an issue with the database query
+   */
   async getCourseInfoById(courseId) {
-    const course = await prisma.class.findUnique({
-      where: { id: courseId },
-      include: {
-        sessions: true, // Include related sessions
-        enrollments: {
-          include: {
-            student: true, // Include enrolled students
+    try {
+      const course = await prisma.class.findUnique({
+        where: { id: courseId },
+        include: {
+          sessions: true, // Include related sessions
+          enrollments: {
+            include: {
+              student: true, // Include enrolled students
+            },
+          },
+          teachings: {
+            include: {
+              teacher: true, // Include teacher details
+            },
           },
         },
-        teachings: {
-          include: {
-            teacher: true, // Include teacher details
-          },
-        },
-      },
-    });
-    return course;
+      });
+
+      return course;
+    } catch (error) {
+      console.error("Error fetching course info by ID:", error);
+      throw new Error("Failed to retrieve course information");
+    }
   }
 }
+
+
 
 module.exports = new TeacherService();

@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 class StudentService {
   /**
    * Creates a new student profile in the database.
-   * 
+   *
    * @async
    * @param {number} age - The age of the student.
    * @param {string} languagePreference - The preferred language of the student.
@@ -16,7 +16,15 @@ class StudentService {
    * @returns {Promise<Object>} The created student profile object.
    * @throws {Error} If there is an issue with the database operation.
    */
-  async createStudentProfile(age, languagePreference, dietRestrictions, previousExperience, miscellaneousRemarks, parentPhoneNumber, userId) {
+  async createStudentProfile(
+      age,
+      languagePreference,
+      dietRestrictions,
+      previousExperience,
+      miscellaneousRemarks,
+      parentPhoneNumber,
+      userId
+  ) {
     return await prisma.student.create({
       data: {
         age,
@@ -25,10 +33,11 @@ class StudentService {
         previousExperience,
         miscellaneousRemarks,
         parentPhoneNumber,
-        user: { connect: { id: userId } }
-      }
-    })
+        user: { connect: { id: Number(userId) } }, // Safely ensure numeric ID
+      },
+    });
   }
+
 }
 
 module.exports = new StudentService();

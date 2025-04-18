@@ -9,32 +9,44 @@ class LessonService {
      * @returns {Promise<Object|null>} - Returns next lesson details or null if not found
      */
     async getNextLesson(teacherId) {
-        return prisma.session.findFirst({
+        const now = new Date();
+
+        const nextLesson = await prisma.session.findFirst({
             where: {
                 teachings: {
-                    some: {teacherId: teacherId}, // Only sessions where this teacher is teaching
+                    some: { teacherId }, // Teacher must be assigned
                 },
-                start: {gte: new Date()}, // Future sessions only
+                start: {
+                    gte: now, // Only future sessions
+                },
             },
-            orderBy: {start: "asc"}, // Get the nearest upcoming session
+            orderBy: {
+                start: "asc", // Soonest first
+            },
             select: {
                 id: true,
                 start: true,
                 end: true,
                 class: {
-                    select: {title: true},
+                    select: {
+                        title: true,
+                    },
                 },
                 lesson: {
                     select: {
                         id: true,
                         title: true,
                         curriculum: {
-                            select: {title: true},
+                            select: {
+                                title: true,
+                            },
                         },
                     },
                 },
             },
         });
+
+        return nextLesson;
     }
 }
 
