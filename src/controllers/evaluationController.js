@@ -1,5 +1,5 @@
 const evaluationService = require("../services/evaluationService");
-const TeacherService = require("../services/teacherService");
+const {getValidatedTeacher} = require("../utils/validateTeacher");
 
 /**
  * Handles the submission of student evaluations.
@@ -16,12 +16,8 @@ const TeacherService = require("../services/teacherService");
  */
 async function submitEvaluation(req, res) {
     try {
-        const teacherId = req.params.teacherId;
-        if (!teacherId) return res.status(400).json({ message: "Teacher ID is required" });
-        if (isNaN(teacherId)) return res.status(400).json({ message: "Invalid teacher ID" });
-
-        const teacher = await TeacherService.findById(parseInt(teacherId));
-        if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+        const teacher = await getValidatedTeacher(req.params.teacherId, res);
+        if (!teacher) return;
 
         const {sessionId, evaluations} = req.body;
 
@@ -33,7 +29,7 @@ async function submitEvaluation(req, res) {
             return res.status(400).json({message: "Evaluation data is required and must be an array"});
         }
 
-        const result = await evaluationService.createEvaluations(teacherId, sessionId, evaluations);
+        const result = await evaluationService.createEvaluations(teacher.id, sessionId, evaluations);
 
         return res.status(201).json({message: "Evaluations submitted successfully", result});
     } catch (error) {

@@ -1,4 +1,5 @@
 const lessonService = require("../services/lessonService");
+const {getValidatedTeacher} = require("../utils/validateTeacher");
 
 class LessonController {
     /**
@@ -10,15 +11,11 @@ class LessonController {
      */
     async getNextLesson(req, res) {
         try {
-            // Extract teacher ID from the authenticated user in JWT token
-            const teacherId = req.params.teacherId;
-
-            if (!teacherId) {
-                return res.status(403).json({ message: "Unauthorized: Teacher ID missing" });
-            }
+            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            if (!teacher) return;
 
             // Fetch next lesson from service
-            const lesson = await lessonService.getNextLesson(teacherId);
+            const lesson = await lessonService.getNextLesson(teacher.id);
 
             if (!lesson) {
                 return res.status(404).json({ message: "No upcoming lessons found" });

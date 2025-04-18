@@ -19,7 +19,7 @@ class ClassController {
       if (isNaN(Number(classId))) return res.status(400).json({ error: "Invalid class ID" });
       // TODO: Validate if class exists
 
-      const students = await ClassService.getStudentsByClassId(classId);
+      const students = await ClassService.getStudentsByClassId(parseInt(classId));
       if (!students) return res.status(404).json({ error: "No students found" });
 
       return res.status(200).json(students);
