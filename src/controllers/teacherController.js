@@ -1,5 +1,6 @@
 const TeacherService = require("../services/teacherService");
 const UserService = require("../services/userService");
+const {getValidatedTeacher} = require("../utils/validateTeacher");
 
 class TeacherController {
     /**
@@ -53,14 +54,10 @@ class TeacherController {
      */
     async getClasses(req, res) {
         try {
-            const teacherId = req.params.teacherId;
-            if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
-            if (isNaN(teacherId)) return res.status(400).json({message: "Invalid Teacher ID"});
+            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            if (!teacher) return;
 
-            const teacher = await TeacherService.findById(parseInt(teacherId));
-            if (!teacher) return res.status(404).json({message: "Teacher not found"});
-
-            const classes = await TeacherService.getClassesByTeacherId(parseInt(teacherId));
+            const classes = await TeacherService.getClassesByTeacherId(parseInt(teacher.id));
 
             return res.status(200).json(classes);
         } catch (error) {
@@ -95,14 +92,10 @@ class TeacherController {
      */
     async getStudents(req, res) {
         try {
-            const teacherId = req.params.teacherId;
-            if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
-            if (isNaN(teacherId)) return res.status(400).json({message: "Invalid teacher ID"});
+            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            if (!teacher) return;
 
-            const teacher = await TeacherService.findById(parseInt(teacherId));
-            if (!teacher) return res.status(404).json({message: "Teacher not found"});
-
-            const students = await TeacherService.getStudentsByTeacherId(parseInt(teacherId));
+            const students = await TeacherService.getStudentsByTeacherId(parseInt(teacher.id));
 
             return res.status(200).json({students});
         } catch (error) {
@@ -143,14 +136,10 @@ class TeacherController {
 
     async getAllCourses(req, res) {
         try {
-            const teacherId = req.params.teacherId;
-            if (!teacherId) return res.status(400).json({message: "Teacher ID is required"});
-            if (isNaN(teacherId)) return res.status(400).json({message: "Invalid Teacher ID"});
+            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            if (!teacher) return;
 
-            const teacher = await TeacherService.findById(parseInt(teacherId));
-            if (!teacher) return res.status(404).json({message: "Teacher not found"});
-
-            const courses = await TeacherService.getAllCourses(teacherId);
+            const courses = await TeacherService.getAllCourses(teacher.id);
             return res.status(200).json({courses});
         } catch (error) {
             console.error("Error getting courses: ", error);
