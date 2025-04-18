@@ -97,19 +97,19 @@ class AuthService {
         }
     }
 
-    async findUser(userType, username, email) {
-        let user;
+    async findUser(userType, identifier) {
         if (userType.toLowerCase() === "student") {
-            user = await prisma.user.findUnique({where: {username}});
+            return prisma.user.findFirst({
+                where: {
+                    OR: [
+                        {username: identifier},
+                        {email: identifier}
+                    ],
+                },
+            });
         } else {
-            user = await this.findRoleUser(userType, email);
+            return this.findRoleUser(userType, identifier);
         }
-
-        if (!user) {
-            throw new Error("Invalid credentials");
-        }
-
-        return user;
     }
 
 // Helper to find user by role (teacher, parent, coordinator, admin)
@@ -150,11 +150,11 @@ class AuthService {
 
 // Helper to generate a JWT token
     generateToken(user) {
-        return sign(
-            {userId: user.id, role: user.role},
-            process.env.JWT_SECRET_KEY,
-            {expiresIn: "2h"}
-        );
+        const secret = process.env.JWT_SECRET_KEY;
+        if (!secret) {
+            throw new Error("JWT secret is not configured");
+        }
+        return sign({ userId: user.id, role: user.role }, secret, { expiresIn: "2h" });
     }
 
 // Helper to get the redirect URL based on user role
