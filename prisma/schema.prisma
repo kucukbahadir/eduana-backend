@@ -16,11 +16,11 @@ datasource db {
 
 // User Management
 enum UserType {
-  STUDENT    // Student role with access to learning materials and sessions
-  TEACHER    // Teacher role with class management and evaluation permissions
-  PARENT     // Parent role with access to view their children's progress
+  STUDENT // Student role with access to learning materials and sessions
+  TEACHER // Teacher role with class management and evaluation permissions
+  PARENT // Parent role with access to view their children's progress
   COORDINATOR // Coordinator role for managing teachers and curricula
-  ADMIN      // Administrator role with full system access
+  ADMIN // Administrator role with full system access
 }
 
 model User {
@@ -33,124 +33,125 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
-  role             UserType
+  role UserType
 
   // Role-specific profiles (one-to-one relations)
-  student          Student?
-  teacher          Teacher?
-  parent           Parent?
-  coordinator      Coordinator?
-  admin            Admin?
+  student     Student?
+  teacher     Teacher?
+  parent      Parent?
+  coordinator Coordinator?
+  admin       Admin?
 }
 
 model Teacher {
-  id           Int        @id @default(autoincrement())
-  email        String     @unique
-  phoneNumber  String
-  
+  id          Int    @id @default(autoincrement())
+  email       String @unique
+  phoneNumber String
+
   // Relation to User table
-  userId       Int        @unique
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Relation to Teaching
-  teachings    Teaching[]
+  teachings Teaching[]
 }
 
 model Student {
-  id                 Int                      @id @default(autoincrement())
-  age                Int?
-  languagePreference String?
-  dietRestrictions   String?
-  previousExperience String?
+  id                   Int     @id @default(autoincrement())
+  age                  Int?
+  languagePreference   String?
+  dietRestrictions     String?
+  previousExperience   String?
   miscellaneousRemarks String?
-  parentPhoneNumber  String?
-  
+  parentPhoneNumber    String?
+
   // Relation to User table
-  userId             Int                      @unique
-  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Related tables
-  externalAccounts   ExternalStudentAccount[]
-  enrollments        Enrollment[]
-  studentParents     StudentParent[]
-  attendances        Attendance[]
-  evaluations        Evaluation[]
+  externalAccounts ExternalStudentAccount[]
+  enrollments      Enrollment[]
+  studentParents   StudentParent[]
+  attendances      Attendance[]
+  evaluations      Evaluation[]
 }
 
 model ExternalStudentAccount {
-  id         Int      @id @default(autoincrement())
-  username   String
-  password   String
-  
+  id       Int    @id @default(autoincrement())
+  username String
+  password String
+
   // Relation to Student
-  studentId  Int
-  student    Student  @relation(fields: [studentId], references: [id])
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Parent {
-  id          Int             @id @default(autoincrement())
-  email       String          @unique
+  id          Int    @id @default(autoincrement())
+  email       String @unique
   phoneNumber String
-  
+
   // Relation to User table
-  userId      Int             @unique
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Related tables
   studentParents StudentParent[]
 }
 
 model Coordinator {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id          Int    @id @default(autoincrement())
+  email       String @unique
   phoneNumber String
-  
+
   // Relation to User table
-  userId      Int      @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Admin {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id          Int    @id @default(autoincrement())
+  email       String @unique
   phoneNumber String
-  
+
   // Relation to User table
-  userId      Int      @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StudentParent {
   // Relations for many-to-many
-  parentId    Int
-  parent      Parent   @relation(fields: [parentId], references: [id])
-  studentId   Int
-  student     Student  @relation(fields: [studentId], references: [id])
+  parentId  Int
+  parent    Parent  @relation(fields: [parentId], references: [id])
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
 
   // Composite primary key
   @@id([parentId, studentId])
 }
 
-// Class Management
 model Class {
-  id           Int            @id @default(autoincrement())
-  title        String
-  description  String?
-  
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+
   // Relations
-  sessions     Session[]
-  evaluations  Evaluation[]
+  curriculum    Curriculum?    @relation(fields: [curriculumId], references: [id]) // Add this line to relate the Class model with Curriculum
+  curriculumId  Int? // Add this field as the foreign key
+  sessions      Session[]
+  evaluations   Evaluation[]
   announcements Announcement[]
-  enrollments  Enrollment[]
-  teachings    Teaching[]
+  enrollments   Enrollment[]
+  teachings     Teaching[]
 }
 
 model Enrollment {
   // Relations for many-to-many
-  studentId    Int
-  student      Student  @relation(fields: [studentId], references: [id])
-  classId      Int
-  class        Class    @relation(fields: [classId], references: [id])
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
+  classId   Int
+  class     Class   @relation(fields: [classId], references: [id])
 
   // Composite primary key
   @@id([studentId, classId])
@@ -158,12 +159,12 @@ model Enrollment {
 
 model Teaching {
   // Relations for many-to-many
-  teacherId    Int
-  teacher      Teacher  @relation(fields: [teacherId], references: [id])
-  sessionId    Int
-  session      Session  @relation(fields: [sessionId], references: [id])
-  classId      Int
-  class        Class    @relation(fields: [classId], references: [id])
+  teacherId Int
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id])
+  classId   Int
+  class     Class   @relation(fields: [classId], references: [id])
 
   // Composite primary key
   @@id([teacherId, sessionId, classId])
@@ -171,213 +172,214 @@ model Teaching {
 
 // Curriculum and Content
 model Curriculum {
-  id           Int      @id @default(autoincrement())
-  title        String
-  description  String
-  field        String
-  type         String
-  level        String
-  
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  field       String
+  type        String
+  level       String
+
   // Relations
-  lessons      Lesson[]
+  lessons Lesson[] // Keep this line to relate lessons to the curriculum
+  Class   Class[]
 }
 
 model Lesson {
-  id           Int                 @id @default(autoincrement())
-  title        String
-  
+  id    Int    @id @default(autoincrement())
+  title String
+
   // Relations to curriculum
   curriculumId Int?
-  curriculum   Curriculum?         @relation(fields: [curriculumId], references: [id])
-  
+  curriculum   Curriculum? @relation(fields: [curriculumId], references: [id])
+
   // Relations to related materials
-  keywords     Keyword[]
-  slides       PresentationSlide[]
-  kahoots      Kahoot[]
-  sessions     Session[]
+  keywords Keyword[]
+  slides   PresentationSlide[]
+  kahoots  Kahoot[]
+  sessions Session[]
 }
 
 model Keyword {
-  id           Int      @id @default(autoincrement())
-  name         String?
-  definition   String?
-  
+  id         Int     @id @default(autoincrement())
+  name       String?
+  definition String?
+
   // Relations to lesson
-  lessonId     Int
-  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
 }
 
 model PresentationSlide {
-  id           Int      @id @default(autoincrement())
-  type         String   // Language variant
-  url          String
-  
+  id   Int    @id @default(autoincrement())
+  type String // Language variant
+  url  String
+
   // Relations to lesson
-  lessonId     Int
-  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
 }
 
 model Kahoot {
-  id           Int      @id @default(autoincrement())
-  type         String   // Language variant
-  url          String
-  
+  id   Int    @id @default(autoincrement())
+  type String // Language variant
+  url  String
+
   // Relations to lesson
-  lessonId     Int
-  lesson       Lesson   @relation(fields: [lessonId], references: [id])
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
 }
 
 model Activity {
-  id           Int       @id @default(autoincrement())
-  name         String
-  description  String
-  
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String
+
   // Relations to sessions
-  sessions     Session[]
+  sessions Session[]
 }
 
 // Scheduling
 model Session {
-  id           Int          @id @default(autoincrement())
-  start        DateTime
-  end          DateTime
-  
+  id    Int      @id @default(autoincrement())
+  start DateTime
+  end   DateTime
+
   // Relations
-  classId      Int
-  class        Class        @relation(fields: [classId], references: [id])
-  activityId   Int?
-  activity     Activity?    @relation(fields: [activityId], references: [id])
-  lessonId     Int?
-  lesson       Lesson?      @relation(fields: [lessonId], references: [id])
-  
+  classId    Int
+  class      Class     @relation(fields: [classId], references: [id])
+  activityId Int?
+  activity   Activity? @relation(fields: [activityId], references: [id])
+  lessonId   Int?
+  lesson     Lesson?   @relation(fields: [lessonId], references: [id])
+
   // Related collections
-  attendances  Attendance[]
-  teachings    Teaching[]
+  attendances        Attendance[]
+  teachings          Teaching[]
   sessionEvaluations SessionEvaluation[]
 }
 
 // Evaluation System
 model Evaluation {
-  id           Int                 @id @default(autoincrement())
-  
+  id Int @id @default(autoincrement())
+
   // Relations
-  classId      Int
-  class        Class               @relation(fields: [classId], references: [id])
-  studentId    Int
-  student      Student             @relation(fields: [studentId], references: [id])
-  
+  classId   Int
+  class     Class   @relation(fields: [classId], references: [id])
+  studentId Int
+  student   Student @relation(fields: [studentId], references: [id])
+
   // Related evaluations
   sessionEvaluations SessionEvaluation[]
-  finalEvaluation FinalEvaluation?
+  finalEvaluation    FinalEvaluation?
 }
 
 enum Independent {
-  COMPLETELY_INDEPENDENT  // Student works without requiring assistance
+  COMPLETELY_INDEPENDENT // Student works without requiring assistance
   OCCASIONALLY_SEEKS_HELP // Student occasionally needs guidance
-  FREQUENTLY_SEEKS_HELP   // Student regularly requires assistance
+  FREQUENTLY_SEEKS_HELP // Student regularly requires assistance
 }
 
 enum Completion {
-  ALWAYS    // Student completes all assigned tasks
-  MOSTLY    // Student completes most assigned tasks
+  ALWAYS // Student completes all assigned tasks
+  MOSTLY // Student completes most assigned tasks
   SOMETIMES // Student completes some assigned tasks
-  RARELY    // Student rarely completes assigned tasks
+  RARELY // Student rarely completes assigned tasks
 }
 
 enum Creativity {
-  COMPLETELY_INSTRUCTION_FOCUSED                      // Student strictly follows instructions without deviation
-  MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES      // Student primarily follows instructions with minimal creative input
-  DISPLAYS_A_BALANCED_APPROACH                        // Student balances following instructions with creative contributions
-  MOSTLY_CREATIVE_SOMETIMES_FOLLOWS_INSTRUCTIONS      // Student primarily takes creative approach while occasionally following instructions
-  COMPLETELY_CREATIVE_AND_INDEPENDENT                 // Student takes an entirely creative and self-directed approach
+  COMPLETELY_INSTRUCTION_FOCUSED // Student strictly follows instructions without deviation
+  MOSTLY_FOLLOWS_INSTRUCTIONS_RARELY_CONTRIBUTES // Student primarily follows instructions with minimal creative input
+  DISPLAYS_A_BALANCED_APPROACH // Student balances following instructions with creative contributions
+  MOSTLY_CREATIVE_SOMETIMES_FOLLOWS_INSTRUCTIONS // Student primarily takes creative approach while occasionally following instructions
+  COMPLETELY_CREATIVE_AND_INDEPENDENT // Student takes an entirely creative and self-directed approach
 }
 
 enum Persistency {
-  VERY_PERSISTENT  // Student shows exceptional determination when facing challenges
-  PERSISTENT       // Student continues working through difficulties
-  AVERAGE          // Student shows typical persistence with challenges
+  VERY_PERSISTENT // Student shows exceptional determination when facing challenges
+  PERSISTENT // Student continues working through difficulties
+  AVERAGE // Student shows typical persistence with challenges
   QUICKLY_GIVES_UP // Student tends to abandon tasks when facing obstacles
 }
 
 enum Adherence {
-  ALWAYS_COMPLIED   // Student consistently follows classroom rules
-  USUALLY_COMPLIED  // Student generally follows classroom rules with occasional exceptions
+  ALWAYS_COMPLIED // Student consistently follows classroom rules
+  USUALLY_COMPLIED // Student generally follows classroom rules with occasional exceptions
   SOMETIMES_COMPLIED // Student follows classroom rules inconsistently
-  DID_NOT_COMPLY    // Student regularly disregards classroom rules
+  DID_NOT_COMPLY // Student regularly disregards classroom rules
 }
 
 model SessionEvaluation {
-  id           Int         @id @default(autoincrement())
-  active       Int
-  independent  Independent
-  completion   Completion
-  creativity   Creativity
-  persistency  Persistency
-  adherence    Adherence
-  notes        String?
-  
+  id          Int         @id @default(autoincrement())
+  active      Int
+  independent Independent
+  completion  Completion
+  creativity  Creativity
+  persistency Persistency
+  adherence   Adherence
+  notes       String?
+
   // Relations
   evaluationId Int
-  evaluation   Evaluation  @relation(fields: [evaluationId], references: [id])
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id])
   sessionId    Int
-  session      Session     @relation(fields: [sessionId], references: [id])
+  session      Session    @relation(fields: [sessionId], references: [id])
 }
 
 enum Level {
   VERY_BEGINNER // Student has minimal understanding of core concepts
-  BEGINNER      // Student understands basic concepts but requires guidance
-  INTERMEDIATE  // Student can work independently on standard tasks
-  ADVANCED      // Student demonstrates strong proficiency and some creativity
-  EXPERT        // Student shows exceptional mastery of the subject matter
-  SUPER_HERO    // Student demonstrates extraordinary talent beyond course expectations
+  BEGINNER // Student understands basic concepts but requires guidance
+  INTERMEDIATE // Student can work independently on standard tasks
+  ADVANCED // Student demonstrates strong proficiency and some creativity
+  EXPERT // Student shows exceptional mastery of the subject matter
+  SUPER_HERO // Student demonstrates extraordinary talent beyond course expectations
 }
 
 model FinalEvaluation {
-  id                   Int      @id @default(autoincrement())
+  id                     Int     @id @default(autoincrement())
   roboticsCodingAptitude Int
-  programmingAptitude  Int
-  handsOnAptitude      Int
-  participation        Int
-  listeningSkills      Int
-  ruleAdherence        Int
+  programmingAptitude    Int
+  handsOnAptitude        Int
+  participation          Int
+  listeningSkills        Int
+  ruleAdherence          Int
   analyticalIntelligence Int
-  problemSolvingAbility Int
-  creativity           Int
-  workSatisfaction     Int
-  learningInterest     Int
-  teamworkAdaptability Int
-  leadershipSkills     Int
-  socialInteraction    Int
-  distractabilityLevel Int
-  presentationSkills   Int
-  level                Level
-  notes                String?
-  
+  problemSolvingAbility  Int
+  creativity             Int
+  workSatisfaction       Int
+  learningInterest       Int
+  teamworkAdaptability   Int
+  leadershipSkills       Int
+  socialInteraction      Int
+  distractabilityLevel   Int
+  presentationSkills     Int
+  level                  Level
+  notes                  String?
+
   // One-to-one relation with evaluation
-  evaluationId         Int      @unique
-  evaluation           Evaluation @relation(fields: [evaluationId], references: [id])
+  evaluationId Int        @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id])
 }
 
 enum Absence {
-  PRESENT  // Student attended the entire session
-  ABSENT   // Student did not attend the session
-  LATE     // Student arrived after the session began
-  EXCUSED  // Student absence was approved in advance
+  PRESENT // Student attended the entire session
+  ABSENT // Student did not attend the session
+  LATE // Student arrived after the session began
+  EXCUSED // Student absence was approved in advance
 }
 
 model Attendance {
   // Composite primary key fields
-  sessionId    Int
-  studentId    Int
-  
+  sessionId Int
+  studentId Int
+
   // Additional fields
-  present      Absence
-  notes        String?
-  timestamp    DateTime @default(now())
-  
+  present   Absence
+  notes     String?
+  timestamp DateTime @default(now())
+
   // Relations
-  session      Session  @relation(fields: [sessionId], references: [id])
-  student      Student  @relation(fields: [studentId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
 
   // Composite primary key definition
   @@id([sessionId, studentId])
@@ -385,13 +387,13 @@ model Attendance {
 
 // Announcements
 model Announcement {
-  id           Int      @id @default(autoincrement())
-  title        String
-  content      String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  classId      Int
-  class        Class    @relation(fields: [classId], references: [id])
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
 }

@@ -97,7 +97,7 @@ class AuthService {
         }
     }
 
-    async findUser(userType, identifier) {
+    async findUser(userType, identifier, email) {
         if (userType.toLowerCase() === "student") {
             return prisma.user.findFirst({
                 where: {
@@ -108,12 +108,13 @@ class AuthService {
                 },
             });
         } else {
-            return this.findRoleUser(userType, identifier);
+            return this.findRoleUser(userType, email);
         }
     }
 
 // Helper to find user by role (teacher, parent, coordinator, admin)
     async findRoleUser(userType, email) {
+        console.log(userType, email );
         switch (userType.toLowerCase()) {
             case "teacher":
                 return prisma.teacher.findUnique({

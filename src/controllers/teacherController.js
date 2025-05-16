@@ -42,19 +42,10 @@ class TeacherController {
         }
     }
 
-    /**
-     * Gets all classes for a specific teacher
-     * @async
-     * @param {Object} req - Express request object
-     * @param {Object} req.params - Request parameters
-     * @param {string} req.params.teacherId - ID of the teacher to get classes for
-     * @param {Object} res - Express response object
-     * @returns {Promise<Object>} - JSON response with classes or error message
-     * @throws {Error} - If there's an error retrieving the classes
-     */
+
     async getClasses(req, res) {
         try {
-            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            const teacher = await getValidatedTeacher(req.user.teacher.id, res);
             if (!teacher) return;
 
             const classes = await TeacherService.getClassesByTeacherId(parseInt(teacher.id));
@@ -66,33 +57,10 @@ class TeacherController {
         }
     }
 
-    /**
-     * Retrieves all students associated with a specific teacher.
-     *
-     * @async
-     * @function getStudents
-     * @param {Object} req - Express request object
-     * @param {Object} req.params - Request parameters
-     * @param {string} req.params.teacherId - Teacher ID to lookup
-     * @param {Object} res - Express response object
-     * @returns {Object} JSON response with students array or error message
-     * @throws {Error} If there's an issue retrieving the students
-     *
-     * @example
-     * // Returns status 200 with students data
-     * // { students: [...] }
-     *
-     * @example
-     * // Returns status 400 if teacher ID is missing or invalid
-     * // { message: "Teacher ID is required" } or { message: "Invalid teacher ID" }
-     *
-     * @example
-     * // Returns status 404 if teacher not found or no students found
-     * // { message: "Teacher not found" } or { message: "No students found" }
-     */
+
     async getStudents(req, res) {
         try {
-            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            const teacher = await getValidatedTeacher(req.user.teacher.id, res);
             if (!teacher) return;
 
             const students = await TeacherService.getStudentsByTeacherId(parseInt(teacher.id));
@@ -136,7 +104,7 @@ class TeacherController {
 
     async getAllCourses(req, res) {
         try {
-            const teacher = await getValidatedTeacher(req.params.teacherId, res);
+            const teacher = await getValidatedTeacher(req.user.teacher.id, res);
             if (!teacher) return;
 
             const courses = await TeacherService.getAllCourses(teacher.id);
