@@ -34,6 +34,97 @@ class StudentController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  async getStudentProgress(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const progress = await StudentService.getStudentProgress(req.user.userId);
+      return res.status(201).json(progress);
+
+    } catch (error) {
+      console.error("Error fetching student progress", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+  async getStudentSummary(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const summary = await StudentService.getStudentSummary(req.user.userId);
+      return res.status(201).json(summary);
+
+    } catch (error) {
+      console.error("Error fetching student summary", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+  async getStudentNextKeywords(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const keywords = await StudentService.getStudentNextKeywords(req.user.userId);
+      return res.status(201).json(keywords);
+
+    } catch (error) {
+      console.error("Error fetching student keywords", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+
+  async postStudentKeywordProgress(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const progress = req.body.progress;
+
+      await StudentService.postStudentKeywordProgress(req.user.userId, progress);
+      return res.status(201).json({ message: "Posted student keyword progress successfully" });
+    } catch (error) {
+    console.error("Error posting student keyword progress", error);
+    return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+  async flushStudentProgress(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const progress = req.body.progress;
+
+      await StudentService.flushStudentProgress(req.user.userId, progress);
+      return res.status(201).json({ message: "Flushed student keyword progress successfully" });
+    } catch (error) {
+      console.error("Error flushing student progress", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+  async postGameSession(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const gameSession = req.body.gameSession;
+
+      await StudentService.postGameSession(req.user.userId, gameSession);
+      return res.status(201).json({ message: "Posted student game-session successfully" });
+
+    } catch (error) {
+      console.error("Error posting student game-session", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
+
+  async patchGameSession(req, res) {
+    try {
+      if(!req.user.userId) return res.status(404).json({ message: "User ID is required" });
+      const gameSession = req.body.gameSession;
+
+      await StudentService.patchGameSession(req.user.userId, gameSession);
+      return res.status(201).json({ message: "Patched student game-session successfully" });
+
+    } catch (error) {
+      console.error("Error patching student game-session", error);
+      return res.status(500).json({message: "Internal server error"});
+    }
+  }
 }
 
 module.exports = new StudentController();
