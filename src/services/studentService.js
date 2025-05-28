@@ -1,24 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * @class StudentService
+ * @description Service layer for handling all student-related business logic and database interactions.
+ */
 class StudentService {
   /**
-   * Creates a new student profile in the database.
+   * Creates a new student profile in the database, associating it with an existing user ID.
    *
    * @async
    * @param {number} age - The age of the student.
    * @param {string} languagePreference - The preferred language of the student.
-   * @param {string} dietRestrictions - Any dietary restrictions the student may have.
+   * @param {string[]} dietRestrictions - Any dietary restrictions the student may have.
    * @param {string} previousExperience - The student's previous experience.
    * @param {string} miscellaneousRemarks - Any additional remarks about the student.
    * @param {string} parentPhoneNumber - The phone number of the student's parent (not directly mapped to User model).
-   * @param {string|number} userId - The ID of the user to connect with this student profile.
+   * @param {string|number} userId - The ID of the user to connect with this student profile. This will be the ID for the new User record.
    * @param {string} fullName - The full name of the student.
    * @returns {Promise<Object>} The created user (student) profile object.
    * @throws {Error} If there is an issue with the database operation.
    */
   async createStudentProfile(age, languagePreference, dietRestrictions, previousExperience, miscellaneousRemarks, parentPhoneNumber, userId, fullName) {
-
     return prisma.user.create({
       data: {
         id: userId, // Assuming userId is provided and should be used as the User's ID
@@ -29,14 +32,19 @@ class StudentService {
         experience: previousExperience,
         remarks: miscellaneousRemarks,
         role: "STUDENT",
+        // parent_phone_number is not directly mapped to the User model in the provided schema
+        // You might need a separate model or handle this outside if it's not a User field.
       },
     });
   }
 
+
   /**
-   * Returns all keyword progress data for the student, organized by curriculum.
+   * Returns all keyword progress data for the student, organized by curriculum, lessons, and keywords.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
-   * @returns {Promise<Object>} Student progress data.
+   * @returns {Promise<Object|null>} Student progress data formatted for the frontend, or null if student is not found.
    */
   async getStudentProgress(studentId) {
     const student = await prisma.user.findUnique({
@@ -85,16 +93,13 @@ class StudentService {
     const domains = {};
 
     student.studentKeywordProgresses.forEach((kp) => {
-      
+
       const relevantLesson = kp.keyword.lessons[0]?.lesson;
 
       if (relevantLesson) {
         const domainName = relevantLesson.curriculum?.title || "Uncategorized";
-        // Attempt to get the first level number associated with the curriculum.
-        // This might need refinement if a lesson/keyword is strictly tied to a single Level model.
         const levelNumber = relevantLesson.curriculum?.levels[0]?.level_number || 0;
         const lessonName = relevantLesson.title;
-        // Format to "YYYY-MM-DD" as requested in the API spec
         const lessonDate = relevantLesson.created_at ? relevantLesson.created_at.toISOString().split("T")[0] : null;
 
         if (!domains[domainName]) {
@@ -113,13 +118,12 @@ class StudentService {
 
         domains[domainName].levels[levelNumber].lessons[lessonName].keywords.push({
           keyword: kp.keyword.value,
-          level: kp.learning_progress, // Student's mastery level
-          lastPracticed: kp.updated_at ? kp.updated_at.toISOString().split("T")[0] : null, // Using updated_at
+          level: kp.learning_progress,
+          lastPracticed: kp.updated_at ? kp.updated_at.toISOString().split("T")[0] : null,
         });
       }
     });
 
-    // Convert the nested objects into arrays for the final response format
     const formattedDomains = Object.values(domains).map((domain) => ({
       ...domain,
       levels: Object.values(domain.levels).map((level) => ({
@@ -135,8 +139,12 @@ class StudentService {
     };
   }
 
+
   /**
    * Returns a summary of the student’s keyword progress for dashboards.
+   * This includes total keywords, mastered, in progress, never seen, and last played session.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
    * @returns {Promise<Object>} Student summary data.
    */
@@ -153,7 +161,6 @@ class StudentService {
       where: { student_id: studentId, learning_progress: { gt: 0, lt: 4 } },
     });
 
-    // Keywords the student has never seen (i.e., no progress entry for them)
     const neverSeen = await prisma.keyword.count({
       where: {
         NOT: {
@@ -181,14 +188,16 @@ class StudentService {
     };
   }
 
+
   /**
-   * Called when the game starts or when a new keyword set is needed.
-   * Orders: First unseen → then partially learned. Limits to 10 keywords.
+   * Retrieves the next set of keywords for a student, prioritizing unseen and then partially learned keywords.
+   * Limits the result to 10 keywords.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
-   * @returns {Promise<Object>} List of keywords for the game.
+   * @returns {Promise<Object>} An object containing a list of keywords for the game.
    */
   async getStudentNextKeywords(studentId) {
-    // Get unseen keywords (keywords with no progress entry for this student)
     const unseenKeywords = await prisma.keyword.findMany({
       where: {
         NOT: {
@@ -209,15 +218,14 @@ class StudentService {
       return { keywords: formattedUnseen };
     }
 
-    // Get partially learned keywords (progress level between 1 and 3)
     const partiallyLearnedKeywords = await prisma.studentKeywordProgress.findMany({
       where: {
         student_id: studentId,
         learning_progress: { gt: 0, lt: 4 },
       },
       select: { keyword: { select: { value: true } }, learning_progress: true },
-      take: 10 - formattedUnseen.length, // Fill up to 10
-      orderBy: { learning_progress: "asc" }, // Prioritize lower mastery levels
+      take: 10 - formattedUnseen.length,
+      orderBy: { learning_progress: "asc" },
     });
 
     const formattedPartiallyLearned = partiallyLearnedKeywords.map((kp) => ({
@@ -228,14 +236,19 @@ class StudentService {
     return { keywords: [...formattedUnseen, ...formattedPartiallyLearned] };
   }
 
+
   /**
-   * Updates keyword progress for a student.
+   * Updates keyword progress for a student. If a progress entry for the keyword
+   * and student does not exist, it creates a new one; otherwise, it updates the existing entry.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
    * @param {Object} data - Keyword progress data.
    * @param {string} data.keyword - The keyword value.
-   * @param {number} data.toLevel - The new level.
-   * @param {string} data.answeredAt - UTC ISO 8601 format timestamp.
-   * @returns {Promise<Object>} The updated student keyword progress entry.
+   * @param {number} data.toLevel - The new mastery level (0-4).
+   * @param {string} data.answeredAt - UTC ISO 8601 format timestamp when the keyword was answered.
+   * @returns {Promise<Object>} The created or updated student keyword progress entry.
+   * @throws {Error} If the keyword is not found in the database.
    */
   async postStudentKeywordProgress(studentId, { keyword, toLevel, answeredAt }) {
     const keywordRecord = await prisma.keyword.findUnique({
@@ -246,34 +259,39 @@ class StudentService {
       throw new Error(`Keyword '${keyword}' not found.`);
     }
 
-    // Ensure mastery level is between 0 and 4
     const validatedToLevel = Math.max(0, Math.min(4, toLevel));
 
     return prisma.studentKeywordProgress.upsert({
       where: {
-        student_id_keyword_id: { // Using the composite unique ID
+        student_id_keyword_id: {
           student_id: studentId,
           keyword_id: keywordRecord.id,
         },
       },
       update: {
         learning_progress: validatedToLevel,
-        updated_at: new Date(answeredAt), // Using updated_at as the last practiced time
+        updated_at: new Date(answeredAt),
       },
       create: {
         student_id: studentId,
         keyword_id: keywordRecord.id,
         learning_progress: validatedToLevel,
-        // created_at will default to now if not provided, for initial creation
       },
     });
   }
 
+
   /**
-   * Submits multiple keyword progress updates in bulk.
+   * Submits multiple keyword progress updates in bulk for a student.
+   * It performs an upsert operation for each item in the provided progress data.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
-   * @param {Array<Object>} progressData - An array of keyword progress objects.
-   * @returns {Promise<void>}
+   * @param {Array<Object>} progressData - An array of keyword progress objects. Each object should contain `keyword` and `toLevel`.
+   * @param {string} progressData[].keyword - The keyword value.
+   * @param {number} progressData[].toLevel - The new mastery level (0-4).
+   * @returns {Promise<void>} A promise that resolves when all bulk updates are completed.
+   * @throws {Error} If there's an issue with the transaction or individual updates.
    */
   async flushStudentProgress(studentId, progressData) {
     const updates = progressData.map(async (item) => {
@@ -282,8 +300,8 @@ class StudentService {
       });
 
       if (!keywordRecord) {
-        console.warn(`Keyword '${item.keyword}' not found during bulk flush for student ${studentId}.`);
-        return null; // Skip this item if keyword doesn't exist
+        console.warn(`Keyword '${item.keyword}' not found during bulk flush for student ${studentId}. Skipping this entry.`);
+        return null;
       }
 
       const validatedToLevel = Math.max(0, Math.min(4, item.toLevel));
@@ -307,17 +325,19 @@ class StudentService {
       });
     }).filter(Boolean); // Filter out nulls from skipped keywords
 
-    // Execute all upserts in a transaction
     await prisma.$transaction(updates);
   }
 
   /**
-   * Records the start of a game session.
+   * Records the start of a new game session for a student.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
    * @param {Object} gameSessionData - Game session details.
-   * @param {string} gameSessionData.game - Name of the game.
-   * @param {string} gameSessionData.startedAt - UTC ISO 8601 format timestamp.
+   * @param {string} gameSessionData.game - The name of the game.
+   * @param {string} gameSessionData.startedAt - UTC ISO 8601 format timestamp when the game started.
    * @returns {Promise<Object>} The created game session object.
+   * @throws {Error} If the game specified by `gameSessionData.game` is not found.
    */
   async postGameSession(studentId, { game, startedAt }) {
     const gameRecord = await prisma.game.findUnique({
@@ -330,21 +350,24 @@ class StudentService {
 
     return prisma.gameSession.create({
       data: {
-        student: {connect: {id: studentId}},
-        game: {connect: {id: gameRecord.id}},
+        student: { connect: { id: studentId } },
+        game: { connect: { id: gameRecord.id } },
         started_at: new Date(startedAt),
       },
     });
   }
 
   /**
-   * Marks a game session as completed.
+   * Marks a game session as completed and records its duration.
+   *
+   * @async
    * @param {string} studentId - The ID of the student.
    * @param {Object} gameSessionData - Game session completion details.
    * @param {string} gameSessionData.sessionId - The ID of the game session to update.
-   * @param {string} gameSessionData.endedAt - UTC ISO 8601 format timestamp.
+   * @param {string} gameSessionData.endedAt - UTC ISO 8601 format timestamp when the session ended.
    * @param {number} gameSessionData.durationSeconds - Duration of the session in seconds.
    * @returns {Promise<Object>} The updated game session object.
+   * @throws {Error} If the session with the given ID is not found or does not belong to the student.
    */
   async patchGameSession(studentId, { sessionId, endedAt, durationSeconds }) {
     return prisma.gameSession.update({
