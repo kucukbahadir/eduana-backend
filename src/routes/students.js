@@ -2,7 +2,6 @@ const express = require('express');
 const { authenticateUser } = require("../middelware/authMiddleware");
 const { hasRole } = require("../middelware/rbacMiddlewares");
 const StudentController = require("../controllers/StudentController");
-const req = require("express/lib/request");
 
 const router = express.Router();
 
@@ -15,4 +14,4 @@ router.post("/flush-progress", authenticateUser, hasRole("STUDENT"), (req, res) 
 router.post("/game-session", authenticateUser, hasRole("STUDENT"), (req, res) => {StudentController.postGameSession(req, res)});
 router.patch("/game-session/:sessionId", authenticateUser, hasRole("STUDENT"), (req, res) => {StudentController.patchGameSession(req, res)});
 
-
+module.exports = router;
