@@ -50,6 +50,7 @@ model User {
   role                Role
   location_id         String?
   location            Location?                @relation(fields: [location_id], references: [id])
+  parent_phone_number String? // Added for emergency contact
   enrollments         Enrollment[]
   teachings           Teaching[]
   attendances         Attendance[]
