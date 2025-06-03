@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticateUser } = require("../middelware/authMiddleware");
 const { hasRole } = require("../middelware/rbacMiddlewares");
-const StudentController = require("../controllers/StudentController");
+const StudentController = require("../controllers/studentController");
 
 const router = express.Router();
 

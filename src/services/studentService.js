@@ -24,16 +24,15 @@ class StudentService {
   async createStudentProfile(age, languagePreference, dietRestrictions, previousExperience, miscellaneousRemarks, parentPhoneNumber, userId, fullName) {
     return prisma.user.create({
       data: {
-        id: userId, // Assuming userId is provided and should be used as the User's ID
-        full_name: fullName, // Must be provided as it's a required field in User model
+        id: userId,
+        full_name: fullName,
         age,
         language_preference: languagePreference,
         diet_restrictions: dietRestrictions,
         experience: previousExperience,
         remarks: miscellaneousRemarks,
         role: "STUDENT",
-        // parent_phone_number is not directly mapped to the User model in the provided schema
-        // You might need a separate model or handle this outside if it's not a User field.
+        parent_phone_number: parentPhoneNumber, // Uncomment this line
       },
     });
   }
@@ -294,14 +293,14 @@ class StudentService {
    * @throws {Error} If there's an issue with the transaction or individual updates.
    */
   async flushStudentProgress(studentId, progressData) {
-    const updates = progressData.map(async (item) => {
+    const updatesPromises = progressData.map(async (item) => { // Rename to clearly indicate promises
       const keywordRecord = await prisma.keyword.findUnique({
         where: { value: item.keyword },
       });
 
       if (!keywordRecord) {
         console.warn(`Keyword '${item.keyword}' not found during bulk flush for student ${studentId}. Skipping this entry.`);
-        return null;
+        return null; // Return null for skipped items
       }
 
       const validatedToLevel = Math.max(0, Math.min(4, item.toLevel));
@@ -315,7 +314,7 @@ class StudentService {
         },
         update: {
           learning_progress: validatedToLevel,
-          updated_at: new Date(), // Use current time for bulk flush
+          updated_at: new Date(),
         },
         create: {
           student_id: studentId,
@@ -323,9 +322,12 @@ class StudentService {
           learning_progress: validatedToLevel,
         },
       });
-    }).filter(Boolean); // Filter out nulls from skipped keywords
+    });
 
-    await prisma.$transaction(updates);
+    // Await all promises, then filter out nulls
+    const resolvedUpdates = (await Promise.all(updatesPromises)).filter(Boolean);
+
+    await prisma.$transaction(resolvedUpdates); // Use the filtered array
   }
 
   /**
