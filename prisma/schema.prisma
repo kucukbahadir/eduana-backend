@@ -37,6 +37,8 @@ enum ProficiencyLevel {
 }
 
 // Models
+
+// Existing User model
 model User {
   id                  String                   @id @default(uuid())
   full_name           String
@@ -48,6 +50,7 @@ model User {
   role                Role
   location_id         String?
   location            Location?                @relation(fields: [location_id], references: [id])
+  parent_phone_number String? // Added for emergency contact
   enrollments         Enrollment[]
   teachings           Teaching[]
   attendances         Attendance[]
@@ -61,24 +64,32 @@ model User {
   externalAccounts    ExternalStudentAccount[]
   announcements       Announcement[]           @relation("AnnouncementAuthor")
 
+  // New relations for tracking student progress
+  studentKeywordProgresses    StudentKeywordProgress[]
+  studentGameLearningGoalLogs StudentGameLearningGoalLog[]
+  gameSessions                GameSession[]
+
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
+// Existing Curriculum model - Modified for 'Level' Model and retaining program_type, difficulty_level
 model Curriculum {
   id               String   @id @default(uuid())
   title            String
-  program_type     String
-  difficulty_level String
+  program_type     String // Retained as additional metadata
+  difficulty_level String // Retained as additional metadata
   classes          Class[]
   lessons          Lesson[]
+  levels           Level[] // New: Relationship to the new Level model
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
+// Existing Class model
 model Class {
   id            String         @id @default(uuid())
   curriculum_id String?
@@ -94,23 +105,26 @@ model Class {
   deleted_at DateTime?
 }
 
+// Existing Lesson model - Updated to align with 'PART 2' keyword relation (already mostly aligned)
 model Lesson {
   id                 String               @id @default(uuid())
   curriculum_id      String
   curriculum         Curriculum           @relation(fields: [curriculum_id], references: [id])
   title              String
   description        String
-  keywords           LessonKeyword[]
+  keywords           LessonKeyword[] // Existing: Links to keywords via LessonKeyword
   sessions           Session[]
   presentationSlides PresentationSlides[]
   kahoots            Kahoot[]
   sessionEvaluations SessionEvaluation[]
+  questions          Question[] // New: Questions tied to this lesson
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
+// Existing Session model
 model Session {
   id                 String              @id @default(uuid())
   class_id           String
@@ -125,12 +139,14 @@ model Session {
   teachings          Teaching[]
   attendances        Attendance[]
   sessionEvaluations SessionEvaluation[]
+  gameSessions       GameSession[] // New: Link to game sessions played during this physical session
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
+// Existing Teaching model
 model Teaching {
   id         String  @id @default(uuid())
   session_id String
@@ -143,6 +159,7 @@ model Teaching {
   deleted_at DateTime?
 }
 
+// Existing Enrollment model
 model Enrollment {
   id       String @id @default(uuid())
   user_id  String
@@ -155,6 +172,7 @@ model Enrollment {
   deleted_at DateTime?
 }
 
+// Existing Attendance model
 model Attendance {
   id         String           @id @default(uuid())
   session_id String
@@ -170,6 +188,7 @@ model Attendance {
   deleted_at DateTime?
 }
 
+// Existing SessionEvaluation model
 model SessionEvaluation {
   id         String  @id @default(uuid())
   session_id String
@@ -186,6 +205,7 @@ model SessionEvaluation {
   deleted_at DateTime?
 }
 
+// Existing FinalEvaluation model
 model FinalEvaluation {
   id           String           @id @default(uuid())
   user_id      String
@@ -200,6 +220,7 @@ model FinalEvaluation {
   deleted_at DateTime?
 }
 
+// Existing PresentationSlides model
 model PresentationSlides {
   id        String @id @default(uuid())
   lesson_id String
@@ -211,6 +232,7 @@ model PresentationSlides {
   deleted_at DateTime?
 }
 
+// Existing Kahoot model
 model Kahoot {
   id        String @id @default(uuid())
   lesson_id String
@@ -222,16 +244,22 @@ model Kahoot {
   deleted_at DateTime?
 }
 
+// Existing Keyword model (kept, but ensure its 'value' is descriptive)
 model Keyword {
   id      String          @id @default(uuid())
   value   String          @unique
-  lessons LessonKeyword[]
+  lessons LessonKeyword[] // Already links keywords to lessons
+
+  questions                Question[] // Questions specifically tied to this keyword
+  // FIX: Added the inverse relation for StudentKeywordProgress
+  studentKeywordProgresses StudentKeywordProgress[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
+// Existing LessonKeyword model (intermediary for Lesson to Keyword, aligned with PART 2)
 model LessonKeyword {
   lesson_id  String
   keyword_id String
@@ -241,6 +269,7 @@ model LessonKeyword {
   @@id([lesson_id, keyword_id])
 }
 
+// Existing ParentAccount model
 model ParentAccount {
   id         String @id @default(uuid())
   parent_id  String
@@ -253,6 +282,7 @@ model ParentAccount {
   deleted_at DateTime?
 }
 
+// Existing ExternalStudentAccount model
 model ExternalStudentAccount {
   id            String @id @default(uuid())
   student_id    String
@@ -265,6 +295,7 @@ model ExternalStudentAccount {
   deleted_at DateTime?
 }
 
+// Existing GamificationPoints model
 model GamificationPoints {
   id          String  @id @default(uuid())
   user_id     String
@@ -279,6 +310,7 @@ model GamificationPoints {
   deleted_at DateTime?
 }
 
+// Existing Badge model
 model Badge {
   id          String      @id @default(uuid())
   name        String
@@ -291,6 +323,7 @@ model Badge {
   deleted_at DateTime?
 }
 
+// Existing UserBadge model
 model UserBadge {
   id       String @id @default(uuid())
   user_id  String
@@ -302,6 +335,7 @@ model UserBadge {
   deleted_at DateTime?
 }
 
+// Existing Location model
 model Location {
   id            String         @id @default(uuid())
   name          String
@@ -316,6 +350,7 @@ model Location {
   deleted_at DateTime?
 }
 
+// Existing Announcement model
 model Announcement {
   id          String    @id @default(uuid())
   message     String
@@ -329,4 +364,112 @@ model Announcement {
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
+}
+
+// --- NEW MODELS FROM PART 2 ---
+
+// New Level model
+// Represents a specific level within a curriculum (e.g., "Beginner Circuits" for Electronics Level 1)
+model Level {
+  id            String     @id @default(uuid())
+  curriculum_id String
+  curriculum    Curriculum @relation(fields: [curriculum_id], references: [id])
+  level_number  Int // e.g., 1, 2, 3 (order within curriculum)
+  title         String?
+  description   String?
+
+  questions Question[] // New: Questions can be tied to a specific level (difficulty)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// New Question model
+model Question {
+  id                         String  @id @default(uuid())
+  lesson_id                  String
+  lesson                     Lesson  @relation(fields: [lesson_id], references: [id])
+  keyword_id                 String
+  keyword                    Keyword @relation(fields: [keyword_id], references: [id])
+  level_id                   String // FK to Level model, indicating question difficulty/curriculum level
+  level                      Level   @relation(fields: [level_id], references: [id])
+  question_text              String
+  answers                    Json // JSON array of 3 answer choices
+  correct_answer_index       Int // Integer: 0–2, index of the correct option
+  explanation_correct_answer String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// New Game model
+model Game {
+  id                      String                       @id @default(uuid())
+  name                    String                       @unique
+  type                    String // e.g., "theory", "practice"
+  description             String?
+  learningGoals           GameLearningGoal[]
+  studentLearningGoalLogs StudentGameLearningGoalLog[]
+  gameSessions            GameSession[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// New GameLearningGoal model
+model GameLearningGoal {
+  id                      String                       @id @default(uuid())
+  game_id                 String
+  game                    Game                         @relation(fields: [game_id], references: [id])
+  goal_description        String
+  studentLearningGoalLogs StudentGameLearningGoalLog[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// New StudentProgressTracking model
+model StudentKeywordProgress {
+  id                String  @id @default(uuid())
+  student_id        String
+  student           User    @relation(fields: [student_id], references: [id])
+  keyword_id        String
+  keyword           Keyword @relation(fields: [keyword_id], references: [id]) // Corrected: This is the field causing the error
+  learning_progress Int     @default(0) @map("level") // Renamed for clarity, maps to 'level' in DB
+  // Note: 'level' in here is student's mastery level, not a curriculum level
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// New StudentGameLearningGoalLog model
+model StudentGameLearningGoalLog {
+  id           String           @id @default(uuid())
+  student_id   String
+  student      User             @relation(fields: [student_id], references: [id])
+  game_id      String
+  game         Game             @relation(fields: [game_id], references: [id])
+  goal_id      String
+  learningGoal GameLearningGoal @relation(fields: [goal_id], references: [id])
+  achieved_at  DateTime
+
+  created_at DateTime @default(now()) // Can use achieved_at, but created_at for logging
+  updated_at DateTime @updatedAt
+}
+
+// New GameSession model
+model GameSession {
+  id              String    @id @default(uuid())
+  student_id      String
+  student         User      @relation(fields: [student_id], references: [id])
+  game_id         String
+  game            Game      @relation(fields: [game_id], references: [id])
+  session_id      String? // Optional: Link to a physical class session if played during one
+  session         Session?  @relation(fields: [session_id], references: [id])
+  started_at      DateTime
+  ended_at        DateTime?
+  durationSeconds Int? // Optional: For analytics if needed
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
