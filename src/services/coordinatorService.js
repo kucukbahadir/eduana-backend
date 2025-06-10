@@ -12,13 +12,18 @@ class CoordinatorService {
    * @throws {Error} If there is a problem creating the coordinator profile
    */
   async createCoordinatorProfile(email, phoneNumber, userId) {
-    await prisma.coordinator.create({
-      data: {
-        email, 
-        phoneNumber, 
-        userId
-      }
-    })
+    try {
+      await prisma.coordinator.create({
+        data: {
+          email,
+          phoneNumber,
+          userId
+        }
+      });
+    } catch (error) {
+      console.error("Error creating coordinator profile:", error);
+      throw new Error("Could not create coordinator profile.");
+    }
   }
 }
 

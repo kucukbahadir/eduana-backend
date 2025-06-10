@@ -2,41 +2,44 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 /**
- * Creates student evaluations and stores them in the database.
+ * Creates student evaluations in a transaction-safe way.
  *
  * @async
  * @function createEvaluations
- * @param {number} teacherId - The ID of the teacher submitting the evaluations
- * @param {number} sessionId - The ID of the session being evaluated
+ * @param {number} teacherId - ID of the teacher submitting evaluations
+ * @param {number} sessionId - ID of the session being evaluated
  * @param {Array} evaluations - Array of evaluation objects
- * @returns {Promise<Object[]>} - Returns created evaluation records
- * @throws {Error} If database insertion fails
+ * @returns {Promise<Object[]>} - Created evaluation records
+ * @throws {Error} If validation or DB operations fail
  */
 async function createEvaluations(teacherId, sessionId, evaluations) {
     try {
-        const savedEvaluations = [];
-
-        // Ensure session exists
+        // 1. Validate the session exists
         const session = await prisma.session.findUnique({ where: { id: sessionId } });
-        if (!session) {
-            throw new Error("Session not found.");
+        if (!session) throw new Error("Session not found.");
+
+        // 2. Batch-fetch all students involved
+        const studentIds = evaluations.map(e => e.studentId);
+        const students = await prisma.student.findMany({
+            where: { id: { in: studentIds } },
+        });
+
+        const validStudentIds = new Set(students.map(s => s.id));
+        const missingStudents = studentIds.filter(id => !validStudentIds.has(id));
+
+        if (missingStudents.length > 0) {
+            throw new Error(`Invalid student IDs: ${missingStudents.join(", ")}`);
         }
 
-        for (const evaluationData of evaluations) {
-            // Ensure student exists
-            const student = await prisma.student.findUnique({ where: { id: evaluationData.studentId } });
-            if (!student) {
-                throw new Error(`Student with ID ${evaluationData.studentId} not found`);
-            }
-
-            // Create the Evaluation record
-            const evaluation = await prisma.evaluation.create({
+        // 3. Prepare evaluation creations
+        const evaluationCreates = evaluations.map(evaluationData => {
+            return prisma.evaluation.create({
                 data: {
-                    studentId: student.id,
-                    classId: session.classId, // Use session's class ID directly
+                    studentId: evaluationData.studentId,
+                    classId: session.classId,
                     sessionEvaluations: {
                         create: {
-                            sessionId: session.id, // Use passed session ID
+                            sessionId: session.id,
                             active: evaluationData.attendance === "Present" ? 1 : 0,
                             independent: evaluationData.independence || "FREQUENTLY_SEEKS_HELP",
                             completion: evaluationData.taskCompletion || "RARELY",
@@ -49,13 +52,14 @@ async function createEvaluations(teacherId, sessionId, evaluations) {
                 },
                 include: { sessionEvaluations: true },
             });
+        });
 
-            savedEvaluations.push(evaluation);
-        }
+        // 4. Use transaction to ensure atomicity
+        const savedEvaluations = await prisma.$transaction(evaluationCreates);
 
         return savedEvaluations;
     } catch (error) {
-        console.error("Database error: ", error);
+        console.error("Evaluation creation failed:", error);
         throw new Error("Failed to create evaluations");
     }
 }
