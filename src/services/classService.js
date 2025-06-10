@@ -3,39 +3,43 @@ const prisma = new PrismaClient();
 
 class ClassService {
   /**
-   * Retrieves all students enrolled in a specific class.
-   *
-   * @async
-   * @param {number} classId - The ID of the class to retrieve students for.
-   * @returns {Promise<Array<Object>>} A promise that resolves to an array of student objects.
-   *                                  Each object contains user information merged with student details.
-   * @throws {Error} If the database query fails or if there are issues parsing the class ID.
+   * Lists students in the teacher’s class.
+   * @param {string} [classId] - Optional class ID to filter students.
+   * @returns {Promise<Array>} List of students.
    */
   async getStudentsByClassId(classId) {
-    try {
-      const students = await prisma.enrollment.findMany({
-        where: {classId},
-        include: {
-          student: {
-            include: {
-              user: true,
+    const whereClause = {
+      role: "STUDENT",
+      ...(classId && { enrollments: { some: { class_id: classId } } }),
+    };
+
+    const students = await prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        full_name: true,
+        enrollments: {
+          select: {
+            class: {
+              select: {
+                id: true,
+                title: true, // Assuming Class model has a 'title' field for class name
+              },
             },
           },
         },
-      });
+      },
+    });
 
-      return students.map(({student}) => {
-        const {user, ...studentDetails} = student;
-        return {
-          ...user,
-          studentDetails,
-        };
-      });
-    } catch (error) {
-      console.error("Error fetching students by classId:", error);
-      throw new Error("Failed to retrieve students for the class.");
-    }
+    return students.map((student) => ({
+      studentId: student.id,
+      name: student.full_name,
+      // If a student can be in multiple classes, you might need to adjust how 'class' is represented.
+      // Here, we take the title of the first enrolled class found.
+      class: student.enrollments[0]?.class?.title || null,
+    }));
   }
+
 }
 
-  module.exports = new ClassService();
+module.exports = new ClassService();
