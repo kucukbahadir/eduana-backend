@@ -38,19 +38,19 @@ class StudentController {
       } = req.body;
 
       if (!userId || !fullName || age === undefined || !languagePreference) {
-        return res.status(400).json({message: "Missing required fields: userId, fullName, age, or languagePreference."});
+        return res.status(400).json({ message: "Missing required fields: userId, fullName, age, or languagePreference." });
       }
 
       const userExists = await UserService.findById(userId);
       if (!userExists) {
-        return res.status(404).json({message: "User not found. Cannot create student profile."});
+        return res.status(404).json({ message: "User not found. Cannot create student profile." });
       }
 
       await StudentService.createStudentProfile(age, languagePreference, dietRestrictions, previousExperience, miscellaneousRemarks, parentPhoneNumber, userId, fullName);
-      return res.status(201).json({message: "Student profile created successfully."});
+      return res.status(201).json({ message: "Student profile created successfully." });
     } catch (error) {
       console.error("Error creating student profile:", error);
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -67,18 +67,18 @@ class StudentController {
   async getStudentProgress(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
       const progress = await StudentService.getStudentProgress(req.user.userId);
 
       if (!progress) {
-        return res.status(404).json({message: "Student progress not found for this user."});
+        return res.status(404).json({ message: "Student progress not found for this user." });
       }
 
       return res.status(200).json(progress);
     } catch (error) {
       console.error("Error fetching student progress:", error);
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -95,17 +95,17 @@ class StudentController {
   async getStudentSummary(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
       const summary = await StudentService.getStudentSummary(req.user.userId);
 
       if (!summary) {
-        return res.status(404).json({message: "Student summary not found for this user."});
+        return res.status(404).json({ message: "Student summary not found for this user." });
       }
       return res.status(200).json(summary);
     } catch (error) {
       console.error("Error fetching student summary:", error);
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -123,14 +123,14 @@ class StudentController {
   async getStudentNextKeywords(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
       const keywords = await StudentService.getStudentNextKeywords(req.user.userId);
 
       return res.status(200).json(keywords);
     } catch (error) {
       console.error("Error fetching student keywords:", error);
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -151,26 +151,26 @@ class StudentController {
   async postStudentKeywordProgress(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
 
-      const {keyword, toLevel, answeredAt} = req.body;
+      const { keyword, toLevel, answeredAt } = req.body;
 
       if (!keyword || toLevel === undefined || !answeredAt) {
-        return res.status(400).json({message: "Missing required progress data: keyword, toLevel, or answeredAt."});
+        return res.status(400).json({ message: "Missing required progress data: keyword, toLevel, or answeredAt." });
       }
 
-      await StudentService.postStudentKeywordProgress(req.user.userId, {keyword, toLevel, answeredAt});
+      await StudentService.postStudentKeywordProgress(req.user.userId, { keyword, toLevel, answeredAt });
 
-      return res.status(201).json({message: "Posted student keyword progress successfully."});
+      return res.status(201).json({ message: "Posted student keyword progress successfully." });
     } catch (error) {
       console.error("Error posting student keyword progress:", error);
 
       if (error.message.includes("Keyword") && error.message.includes("not found")) {
-        return res.status(404).json({message: error.message});
+        return res.status(404).json({ message: error.message });
       }
 
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -190,19 +190,19 @@ class StudentController {
   async flushStudentProgress(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
       const progress = req.body.progress;
 
       if (!Array.isArray(progress)) {
-        return res.status(400).json({message: "Progress data must be an array."});
+        return res.status(400).json({ message: "Progress data must be an array." });
       }
 
       await StudentService.flushStudentProgress(req.user.userId, progress);
-      return res.status(201).json({message: "Flushed student keyword progress successfully."});
+      return res.status(201).json({ message: "Flushed student keyword progress successfully." });
     } catch (error) {
       console.error("Error flushing student progress:", error);
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -222,23 +222,23 @@ class StudentController {
   async postGameSession(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
-      const {game, startedAt} = req.body;
+      const { game, startedAt } = req.body;
 
       if (!game || !startedAt) {
-        return res.status(400).json({message: "Missing required game session data: game or startedAt."});
+        return res.status(400).json({ message: "Missing required game session data: game or startedAt." });
       }
 
-      await StudentService.postGameSession(req.user.userId, {game, startedAt});
-      return res.status(201).json({message: "Posted student game session successfully."});
+      await StudentService.postGameSession(req.user.userId, { game, startedAt });
+      return res.status(201).json({ message: "Posted student game session successfully." });
 
     } catch (error) {
       console.error("Error posting student game session:", error);
       if (error.message.includes("Game") && error.message.includes("not found")) {
-        return res.status(404).json({message: error.message});
+        return res.status(404).json({ message: error.message });
       }
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 
@@ -259,25 +259,270 @@ class StudentController {
   async patchGameSession(req, res) {
     try {
       if (!req.user || !req.user.userId) {
-        return res.status(401).json({message: "User not authenticated or user ID is missing."});
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
       }
       // Get sessionId from URL parameters
-      const {sessionId} = req.params;
-      const {endedAt, durationSeconds} = req.body; // endedAt and durationSeconds are still from body
+      const { sessionId } = req.params;
+      const { endedAt, durationSeconds } = req.body; // endedAt and durationSeconds are still from body
 
       if (!sessionId || !endedAt || durationSeconds === undefined) {
-        return res.status(400).json({message: "Missing required game session patch data: sessionId, endedAt, or durationSeconds."});
+        return res.status(400).json({ message: "Missing required game session patch data: sessionId, endedAt, or durationSeconds." });
       }
 
-      await StudentService.patchGameSession(req.user.userId, {sessionId, endedAt, durationSeconds});
-      return res.status(200).json({message: "Patched student game session successfully."});
+      await StudentService.patchGameSession(req.user.userId, { sessionId, endedAt, durationSeconds });
+      return res.status(200).json({ message: "Patched student game session successfully." });
 
     } catch (error) {
       console.error("Error patching student game session:", error);
       if (error.message.includes("Record to update not found")) {
-        return res.status(404).json({message: "Game session not found or does not belong to the user."});
+        return res.status(404).json({ message: "Game session not found or does not belong to the user." });
       }
-      return res.status(500).json({message: "Internal server error."});
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves all classes associated with a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with list of classes or error response.
+   * @throws {Error} If there's an issue fetching the data.
+   */
+  async getStudentClasses(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const classes = await StudentService.getStudentClasses(req.user.userId);
+
+      if (!classes || classes.length === 0) {
+        return res.status(404).json({ message: "No classes found for this student." });
+      }
+
+      return res.status(200).json(classes);
+    } catch (error) {
+      console.error("Error fetching student classes:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves a specific class by its ID for a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {string} req.params.classId - The ID of the class to retrieve.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with class details or error response.  
+   * @throws {Error} If the class is not found or does not belong to the student.
+   * */
+  async getStudentClass(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const { classId } = req.params;
+
+      if (!classId) {
+        return res.status(400).json({ message: "Missing required classId parameter." });
+      }
+
+      const studentClass = await StudentService.getStudentClass(req.user.userId, classId);
+
+      if (!studentClass) {
+        return res.status(404).json({ message: "Class not found or does not belong to the student." });
+      }
+
+      return res.status(200).json(studentClass);
+    } catch (error) {
+      console.error("Error fetching student class:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+}
+
+  /**
+   * Retrieves all sessions associated with a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with list of sessions or error response.
+   * @throws {Error} If there's an issue fetching the data.
+   */
+  async getStudentSessions(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const sessions = await StudentService.getStudentSessions(req.user.userId);
+
+      if (!sessions || sessions.length === 0) {
+        return res.status(404).json({ message: "No sessions found for this student." });
+      }
+
+      return res.status(200).json(sessions);
+    } catch (error) {
+      console.error("Error fetching student sessions:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves a specific session by its ID for a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {string} req.params.sessionId - The ID of the session to retrieve.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with session details or error response.
+   * @throws {Error} If the session is not found or does not belong to the student.
+   */
+  async getStudentSession(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const { sessionId } = req.params;
+
+      if (!sessionId) {
+        return res.status(400).json({ message: "Missing required sessionId parameter." });
+      }
+
+      const session = await StudentService.getStudentSession(req.user.userId, sessionId);
+
+      if (!session) {
+        return res.status(404).json({ message: "Session not found or does not belong to the student." });
+      }
+
+      return res.status(200).json(session);
+    } catch (error) {
+      console.error("Error fetching student session:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    } 
+  }
+
+  /**
+   * Retrieves all announcements for a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with list of announcements or error response.
+   * @throws {Error} If there's an issue fetching the data.
+   */
+  async getStudentAnnouncements(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const announcements = await StudentService.getStudentAnnouncements(req.user.userId);
+
+      if (!announcements || announcements.length === 0) {
+        return res.status(404).json({ message: "No announcements found for this student." });
+      }
+
+      return res.status(200).json(announcements);
+    } catch (error) {
+      console.error("Error fetching student announcements:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves all evaluations for a student.
+   * 
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with list of evaluations or error response.
+   * @throws {Error} If there's an issue fetching the data.
+   */
+  async getStudentEvaluations(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const evaluations = await StudentService.getStudentEvaluations(req.user.userId);
+
+      if (!evaluations || evaluations.length === 0) {
+        return res.status(404).json({ message: "No evaluations found for this student." });
+      }
+
+      return res.status(200).json(evaluations);
+    } catch (error) {
+      console.error("Error fetching student evaluations:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves a specific evaluation by its ID for a student.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {string} req.params.evaluationId - The ID of the evaluation to retrieve.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with evaluation details or error response.
+   * @throws {Error} If the evaluation is not found or does not belong to the student.
+   */
+  async getStudentEvaluation(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const { evaluationId } = req.params;
+
+      if (!evaluationId) {
+        return res.status(400).json({ message: "Missing required evaluationId parameter." });
+      }
+
+      const evaluation = await StudentService.getStudentEvaluation(req.user.userId, evaluationId);
+
+      if (!evaluation) {
+        return res.status(404).json({ message: "Evaluation not found or does not belong to the student." });
+      }
+
+      return res.status(200).json(evaluation);
+    } catch (error) {
+      console.error("Error fetching student evaluation:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    }
+  }
+
+  /**
+   * Retrieves the student profile for the authenticated user.
+   *
+   * @param {Object} req - Express request object.
+   * @param {Object} req.user - Authenticated user object containing userId.
+   * @param {string} req.user.userId - The ID of the authenticated student.
+   * @param {Object} res - Express response object.
+   * @returns {Promise<Object>} 200 status with student profile data or error response.
+   * @throws {Error} If there's an issue fetching the profile.
+   */
+  async getStudentProfile(req, res) {
+    try {
+      if (!req.user || !req.user.userId) {
+        return res.status(401).json({ message: "User not authenticated or user ID is missing." });
+      }
+      const profile = await StudentService.getStudentProfile(req.user.userId);
+
+      if (!profile) {
+        return res.status(404).json({ message: "Student profile not found for this user." });
+      }
+
+      return res.status(200).json(profile);
+    } catch (error) {
+      console.error("Error fetching student profile:", error);
+      return res.status(500).json({ message: "Internal server error." });
     }
   }
 }
