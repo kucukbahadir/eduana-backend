@@ -383,6 +383,184 @@ class StudentService {
       },
     });
   }
-}
 
+  /**
+   * Retrieves all classes associated with a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @returns {Promise<Array>} An array of class objects associated with the student.
+   */
+  async getStudentClasses(studentId) {
+    return prisma.class.findMany({
+      where: {
+        students: {
+          some: {
+            id: studentId,
+          },
+        },
+      },
+      include: {
+        students: true, // Include student details if needed
+      },
+    });
+
+  }
+  /**
+   * Retrieves a specific class by its ID for a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @param {string} classId - The ID of the class to retrieve.
+   * @returns {Promise<Object|null>} The class object if found, or null if not found.
+   */
+  async getStudentClass(studentId, classId) {
+    return prisma.class.findFirst({
+      where: {
+        id: classId,
+        students: {
+          some: {
+            id: studentId,
+          },
+        },
+      },
+      include: {
+        students: true, // Include student details if needed
+      },
+    });
+  }
+  /**
+   * Retrieves all game sessions associated with a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @returns {Promise<Array>} An array of game session objects associated with the student.
+   */
+  async getStudentSessions(studentId) {
+    return prisma.gameSession.findMany({
+      where: {
+        student_id: studentId,
+      },
+      include: {
+        game: true, // Include game details if needed
+      },
+      orderBy: {
+        started_at: "desc", // Order by most recent session first
+      },
+    });
+  }
+  /**
+   * Retrieves a specific game session by its ID for a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @param {string} sessionId - The ID of the game session to retrieve.
+   * @returns {Promise<Object|null>} The game session object if found, or null if not found.
+   */
+  async getStudentSession(studentId, sessionId) {
+    return prisma.gameSession.findFirst({
+      where: {
+        id: sessionId,
+        student_id: studentId, // Ensure the session belongs to the student
+      },
+      include: {
+        game: true, // Include game details if needed
+      },
+    });
+  }
+  /**
+   * Retrieves all announcements for a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @returns {Promise<Array>} An array of announcement objects associated with the student.
+   */
+  async getStudentAnnouncements(studentId) {
+    return prisma.announcement.findMany({
+      where: {
+        students: {
+          some: {
+            id: studentId,
+          },
+        },
+      },
+      include: {
+        students: true, // Include student details if needed
+      },
+      orderBy: {
+        created_at: "desc", // Order by most recent announcement first
+      },
+    });
+  }
+  /**
+   * Retrieves all evaluations for a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @returns {Promise<Array>} An array of evaluation objects associated with the student.
+   */
+  async getStudentEvaluations(studentId) {
+    return prisma.evaluation.findMany({
+      where: {
+        students: {
+          some: {
+            id: studentId,
+          },
+        },
+      },
+      include: {
+        students: true, // Include student details if needed
+      },
+      orderBy: {
+        created_at: "desc", // Order by most recent evaluation first
+      },
+    });
+  }
+  /**
+   * Retrieves a specific evaluation by its ID for a student.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @param {string} evaluationId - The ID of the evaluation to retrieve.
+   * @returns {Promise<Object|null>} The evaluation object if found, or null if not found.
+   */
+  async getStudentEvaluation(studentId, evaluationId) {
+    return prisma.evaluation.findFirst({
+      where: {
+        id: evaluationId,
+        students: {
+          some: {
+            id: studentId, // Ensure the evaluation belongs to the student
+          },
+        },
+      },
+      include: {
+        students: true, // Include student details if needed
+      },
+    });
+  }
+
+  /**
+   * Retrieves the student profile for a given student ID.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student.
+   * @returns {Promise<Object|null>} The student profile object if found, or null if not found.
+   */
+  async getStudentProfile(studentId) {
+    return prisma.user.findUnique({
+      where: { id: studentId },
+      select: {
+        id: true,
+        full_name: true,
+        age: true,
+        language_preference: true,
+        diet_restrictions: true,
+        experience: true,
+        remarks: true,
+        parent_phone_number: true, // Include parent phone number
+      },
+    });
+  }
+}
 module.exports = new StudentService();
