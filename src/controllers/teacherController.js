@@ -114,6 +114,36 @@ class TeacherController {
             return res.status(500).json({message: "Internal server error"});
         }
     }
+
+    async getAllTeachers(req, res) {
+    try {
+      const teachers = await TeacherService.getAll();
+      return res.status(200).json(teachers);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async assignTeacher(req, res) {
+    try {
+      const assignment = await TeacherService.assign(req.body);
+      return res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error assigning teacher:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async unassignTeacher(req, res) {
+    try {
+      await TeacherService.unassign(req.params.id);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error unassigning teacher:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 
 module.exports = new TeacherController();

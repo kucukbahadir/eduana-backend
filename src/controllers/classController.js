@@ -28,6 +28,46 @@ class ClassController {
       return res.status(500).json({ error: "Internal server error" });
     }
   }
+
+  async getAllClasses(req, res) {
+    try {
+      const classes = await ClassService.getAll();
+      return res.status(200).json(classes);
+    } catch (error) {
+      console.error("Error getting classes:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async createClass(req, res) {
+    try {
+      const created = await ClassService.create(req.body);
+      return res.status(201).json(created);
+    } catch (error) {
+      console.error("Error creating class:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async updateClass(req, res) {
+    try {
+      const updated = await ClassService.update(req.params.id, req.body);
+      return res.status(200).json(updated);
+    } catch (error) {
+      console.error("Error updating class:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async deleteClass(req, res) {
+    try {
+      await ClassService.delete(req.params.id);
+      return res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting class:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 
 module.exports = new ClassController();
