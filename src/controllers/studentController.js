@@ -293,7 +293,7 @@ class StudentController {
 
   async addStudent(req, res) {
     try {
-      const student = await StudentService.create(req.body);
+      const student = await StudentService.createStudentProfile(req.body);
       return res.status(201).json(student);
     } catch (error) {
       console.error("Error adding student:", error);
