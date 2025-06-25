@@ -280,5 +280,45 @@ class StudentController {
       return res.status(500).json({message: "Internal server error."});
     }
   }
+
+   async getStudents(req, res) {
+    try {
+      const students = await StudentService.getFiltered(req.query);
+      return res.status(200).json(students);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async addStudent(req, res) {
+    try {
+      const student = await StudentService.createStudentProfile(req.body);
+      return res.status(201).json(student);
+    } catch (error) {
+      console.error("Error adding student:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async enrollStudents(req, res) {
+    try {
+      const enrollments = await StudentService.enroll(req.body);
+      return res.status(201).json(enrollments);
+    } catch (error) {
+      console.error("Error enrolling students:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async bulkUpload(req, res) {
+    try {
+      const result = await StudentService.bulkUpload(req.file); // assuming multer
+      return res.status(201).json(result);
+    } catch (error) {
+      console.error("Error in bulk upload:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 module.exports = new StudentController();

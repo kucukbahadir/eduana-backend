@@ -225,8 +225,94 @@ class TeacherService {
       throw new Error("Failed to retrieve course information");
     }
   }
+
+  /**
+   * Retrieves all teachers from the database.
+   *
+   * @async
+   * @returns {Promise<Array>} A promise that resolves to an array of teacher objects
+   * @throws {Error} If there is an issue with the database operation
+   */
+  async getAll() {
+    try {
+      return await prisma.teacher.findMany({
+        include: {
+          user: true, // Include user information associated with the teacher
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching all teachers:", error);
+      throw new Error("Failed to retrieve teachers");
+    }
+  }
+
+  /**
+   * Assigns a teacher to a class.
+   *
+   * @async
+   * @param {number} classId - The ID of the class to assign the teacher to
+   * @param {number} teacherId - The ID of the teacher to assign
+   * @returns {Promise<void>} A promise that resolves when the assignment is successful
+   * @throws {Error} If there is an issue with the database operation
+   */
+  async assign({ classId, teacherId }) {
+    try {
+      // Check if the class already has a teacher assigned
+      const existingTeaching = await prisma.teaching.findFirst({
+        where: { classId },
+      });
+
+      if (existingTeaching) {
+        throw new Error("This class already has a teacher assigned.");
+      }
+
+      // Create the teaching assignment
+      return await prisma.teaching.create({
+        data: {
+          classId,
+          teacherId,
+        },
+      });
+    } catch (error) {
+      console.error("Error assigning teacher:", error);
+      throw new Error("Failed to assign teacher to class");
+    }
 }
 
+  /**
+   * Unassigns a teacher from a class.
+   *
+   * @async
+   * @param {number} classId - The ID of the class to unassign the teacher from
+   * @param {number} teacherId - The ID of the teacher to unassign
+   * @returns {Promise<void>} A promise that resolves when the unassignment is successful
+   * @throws {Error} If there is an issue with the database operation
+   */
+  async unassign({ classId, teacherId }) {
+    try {
+      // Check if the teaching assignment exists
+      const existingTeaching = await prisma.teaching.findFirst({
+        where: {
+          classId,
+          teacherId,
+        },
+      });
 
+      if (!existingTeaching) {
+        throw new Error("No teaching assignment found for this class and teacher.");
+      }
+
+      // Delete the teaching assignment
+      await prisma.teaching.delete({
+        where: {
+          id: existingTeaching.id,
+        },
+      });
+    } catch (error) {
+      console.error("Error unassigning teacher:", error);
+      throw new Error("Failed to unassign teacher from class");
+    }
+  }
+}
 
 module.exports = new TeacherService();

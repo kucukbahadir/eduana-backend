@@ -383,6 +383,64 @@ class StudentService {
       },
     });
   }
+  
+  /** * Retrieves a list of all students, including their enrolled classes.
+   *
+   * @async
+   * @returns {Promise<Array>} List of students with their enrolled classes.
+   */
+  async getAllStudents() {
+    return await prisma.student.findMany({
+      include: {
+        classes: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+  }
+  /**
+   * Enrolls a student in one or more classes.
+   *
+   * @async
+   * @param {string} studentId - The ID of the student to enroll.
+   * @param {Array<string>} classIds - An array of class IDs to enroll the student in.
+   * @returns {Promise<Array>} List of enrollments created.
+   */
+  async enrollStudentInClasses(studentId, classIds) {
+    const enrollments = await Promise.all(
+      classIds.map((classId) =>
+        prisma.classEnrollment.create({
+          data: {
+            student: { connect: { id: studentId } },
+            class: { connect: { id: classId } },
+          },
+        })
+      )
+    );
+    return enrollments;
+  }
+  /**
+   * Bulk uploads students from a CSV file.
+   * The CSV should contain columns for full_name, age, language_preference, diet_restrictions, previous_experience, miscellaneous_remarks, parent_phone_number.
+   *
+   * @async
+   * @param {File} file - The uploaded CSV file.
+   * @returns {Promise<Array>} List of created student profiles.
+   */
+  async bulkUpload(file) {
+    const students = [];
+    const csvData = await this.parseCSV(file);
+
+    for (const row of csvData) {
+      const student = await this.createStudentProfile(row);
+      students.push(student);
+    }
+
+    return students;
+  }
 }
 
 module.exports = new StudentService();
