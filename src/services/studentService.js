@@ -37,7 +37,6 @@ class StudentService {
     });
   }
 
-
   /**
    * Returns all keyword progress data for the student, organized by curriculum, lessons, and keywords.
    *
@@ -92,7 +91,6 @@ class StudentService {
     const domains = {};
 
     student.studentKeywordProgresses.forEach((kp) => {
-
       const relevantLesson = kp.keyword.lessons[0]?.lesson;
 
       if (relevantLesson) {
@@ -137,7 +135,6 @@ class StudentService {
       domains: formattedDomains,
     };
   }
-
 
   /**
    * Returns a summary of the student’s keyword progress for dashboards.
@@ -187,7 +184,6 @@ class StudentService {
     };
   }
 
-
   /**
    * Retrieves the next set of keywords for a student, prioritizing unseen and then partially learned keywords.
    * Limits the result to 10 keywords.
@@ -197,6 +193,54 @@ class StudentService {
    * @returns {Promise<Object>} An object containing a list of keywords for the game.
    */
   async getStudentNextKeywords(studentId) {
+    return {
+      keywords: [
+        {
+          id: 201,
+          name: "Electronics",
+          questions: [
+            {
+              text: "What is the name of the positive endpoint with electro components",
+              answers: {
+                1: { text: "No name" },
+                2: { text: "Anode" },
+                3: { text: "Cathode" },
+              },
+              correct_answer_id: "2",
+              correct_answer_description: "Anode is the positive side and the cathode is negative",
+            },
+            {
+              text: "Vraag2",
+              answers: {
+                1: { text: "No" },
+                2: { text: "Misschien" },
+                3: { text: "Ja" },
+              },
+              correct_answer_id: "2",
+              correct_answer_description: "Vraag2 uitleg",
+            },
+          ],
+        },
+        {
+          id: 20,
+          name: "Electronics",
+          questions: [
+            {
+              text: "Hallo Jimmy",
+              answers: {
+                1: { text: "a" },
+                2: { text: "b" },
+                3: { text: "c" },
+              },
+              correct_answer_id: "2",
+              correct_answer_description: "Vraag 3 uitleg",
+            },
+          ],
+        },
+      ],
+    };
+
+    /*
     const unseenKeywords = await prisma.keyword.findMany({
       where: {
         NOT: {
@@ -233,8 +277,8 @@ class StudentService {
     }));
 
     return { keywords: [...formattedUnseen, ...formattedPartiallyLearned] };
+    */
   }
-
 
   /**
    * Updates keyword progress for a student. If a progress entry for the keyword
@@ -279,7 +323,6 @@ class StudentService {
     });
   }
 
-
   /**
    * Submits multiple keyword progress updates in bulk for a student.
    * It performs an upsert operation for each item in the provided progress data.
@@ -293,7 +336,8 @@ class StudentService {
    * @throws {Error} If there's an issue with the transaction or individual updates.
    */
   async flushStudentProgress(studentId, progressData) {
-    const updatesPromises = progressData.map(async (item) => { // Rename to clearly indicate promises
+    const updatesPromises = progressData.map(async (item) => {
+      // Rename to clearly indicate promises
       const keywordRecord = await prisma.keyword.findUnique({
         where: { value: item.keyword },
       });

@@ -3,6 +3,8 @@ const healthCheckerRouter = require('./routes/healthchecker');
 const userRoutes = require('./routes/users');
 const teacherRoutes = require('./routes/teachers');
 const classRoutes = require('./routes/classes');
+const lessonRoutes = require('./routes/lesson');
+const sessionRoutes = require('./routes/sessions');
 const authRoutes = require('./routes/auth');
 const studentRoutes = require('./routes/students');
 
@@ -19,6 +21,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/classes", classRoutes);
+app.use("/api/lessons", lessonRoutes)
+app.use("/api/sessions", sessionRoutes);
 app.use("/api/students", studentRoutes);
 
 module.exports = app;

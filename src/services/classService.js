@@ -40,6 +40,106 @@ class ClassService {
     }));
   }
 
+  async getClassById(classId) {
+    const classData = await prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        name: true,
+        curriculum: {
+          select: {
+            id: true,
+            title: true,
+            program_type: true,
+            difficulty_level: true,
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        },
+        enrollments: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                full_name: true,
+                age: true,
+                language_preference: true,
+                diet_restrictions: true,
+                experience: true,
+                remarks: true,
+                parent_phone_number: true,
+              },
+            },
+          },
+        },
+        sessions: {
+          select: {
+            id: true,
+            start_time: true,
+            end_time: true,
+            lesson: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return classData;
+  }
+
+  async getClassesByTeacherId(teacherId) {
+    const classes = await prisma.teaching.findMany({
+      where: { user_id: teacherId },
+      select: {
+        session: {
+          select: {
+            class: {
+              select: {
+                id: true,
+                name: true,
+                curriculum: {
+                  select: {
+                    id: true,
+                    title: true,
+                    program_type: true,
+                    difficulty_level: true,
+                  },
+                },
+                location: {
+                  select: {
+                    id: true,
+                    name: true,
+                    address: true,
+                  },
+                },
+                sessions: {
+                  select: {
+                    id: true,
+                    start_time: true,
+                    end_time: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const uniqueClasses = Array.from(new Map(classes.map((teaching) => [teaching.session.class.id, teaching.session.class])).values());
+
+    return uniqueClasses;
+  }
 }
 
 module.exports = new ClassService();

@@ -23,13 +23,6 @@ enum Role {
   COORDINATOR
 }
 
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  EXCUSED
-  LATE
-}
-
 enum ProficiencyLevel {
   BEGINNER
   INTERMEDIATE
@@ -79,7 +72,7 @@ model Curriculum {
   id               String   @id @default(uuid())
   title            String
   program_type     String // Retained as additional metadata
-  difficulty_level String // Retained as additional metadata
+  difficulty_level Int    // Retained as additional metadata
   classes          Class[]
   lessons          Lesson[]
   levels           Level[] // New: Relationship to the new Level model
@@ -88,10 +81,9 @@ model Curriculum {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
-
-// Existing Class model
 model Class {
   id            String         @id @default(uuid())
+  name          String
   curriculum_id String?
   curriculum    Curriculum?    @relation(fields: [curriculum_id], references: [id])
   location_id   String?
@@ -104,27 +96,23 @@ model Class {
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
-
-// Existing Lesson model - Updated to align with 'PART 2' keyword relation (already mostly aligned)
 model Lesson {
-  id                 String               @id @default(uuid())
-  curriculum_id      String
-  curriculum         Curriculum           @relation(fields: [curriculum_id], references: [id])
-  title              String
-  description        String
-  keywords           LessonKeyword[] // Existing: Links to keywords via LessonKeyword
-  sessions           Session[]
-  presentationSlides PresentationSlides[]
-  kahoots            Kahoot[]
-  sessionEvaluations SessionEvaluation[]
-  questions          Question[] // New: Questions tied to this lesson
+  id                  String               @id @default(uuid())
+  curriculum_id       String
+  curriculum          Curriculum           @relation(fields: [curriculum_id], references: [id])
+  title               String
+  description         String
+  keywords            LessonKeyword[]
+  learning_objectives LessonObjective[]
+  sessions            Session[]
+  resources           Resources[]
+  questions           Question[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
 }
 
-// Existing Session model
 model Session {
   id                 String              @id @default(uuid())
   class_id           String
@@ -139,7 +127,7 @@ model Session {
   teachings          Teaching[]
   attendances        Attendance[]
   sessionEvaluations SessionEvaluation[]
-  gameSessions       GameSession[] // New: Link to game sessions played during this physical session
+  gameSessions       GameSession[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -172,12 +160,13 @@ model Enrollment {
   deleted_at DateTime?
 }
 
-// Existing Attendance model
 model Attendance {
   id         String           @id @default(uuid())
   session_id String
   user_id    String
-  status     AttendanceStatus
+  present    Boolean?
+  late       Boolean?
+  excused    Boolean?
   note       String?
   timestamp  DateTime
   session    Session          @relation(fields: [session_id], references: [id])
@@ -186,23 +175,28 @@ model Attendance {
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
+
+  @@unique([session_id, user_id])
 }
 
-// Existing SessionEvaluation model
 model SessionEvaluation {
-  id         String  @id @default(uuid())
-  session_id String
-  lesson_id  String
+  session_id String 
   user_id    String
-  feedback   String
-  score      Int
+
+  participation_score   Int   // 1 - 5 scale
+  understanding_score   Int   // 1 - 5 scale
+  collaboration_score   Int   // 1 - 5 scale
+  problem_solving_score Int   // 1 - 5 scale
+  task_completion_score Int   // 1 - 5 scale
+
   session    Session @relation(fields: [session_id], references: [id])
-  lesson     Lesson  @relation(fields: [lesson_id], references: [id])
   user       User    @relation(fields: [user_id], references: [id])
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
   deleted_at DateTime?
+
+  @@id([session_id, user_id])
 }
 
 // Existing FinalEvaluation model
@@ -220,39 +214,32 @@ model FinalEvaluation {
   deleted_at DateTime?
 }
 
-// Existing PresentationSlides model
-model PresentationSlides {
-  id        String @id @default(uuid())
-  lesson_id String
-  lesson    Lesson @relation(fields: [lesson_id], references: [id])
-  url       String
+enum ResourceType {
+  SLIDES
+  KAHOOT
+}
+
+model Resources {
+  id          String       @id @default(uuid())
+  url         String
+  type        ResourceType
+  language    String
+  
+  lesson_id   String
+  lesson      Lesson       @relation(fields: [lesson_id], references: [id])
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
-  deleted_at DateTime?
 }
 
-// Existing Kahoot model
-model Kahoot {
-  id        String @id @default(uuid())
-  lesson_id String
-  lesson    Lesson @relation(fields: [lesson_id], references: [id])
-  url       String
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-}
-
-// Existing Keyword model (kept, but ensure its 'value' is descriptive)
 model Keyword {
-  id      String          @id @default(uuid())
-  value   String          @unique
-  lessons LessonKeyword[] // Already links keywords to lessons
+  id          String          @id @default(uuid())
+  name        String          @unique
+  description String?
 
-  questions                Question[] // Questions specifically tied to this keyword
-  // FIX: Added the inverse relation for StudentKeywordProgress
-  studentKeywordProgresses StudentKeywordProgress[]
+  lessons                   LessonKeyword[]
+  questions                 Question[]
+  studentKeywordProgresses  StudentKeywordProgress[]
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -267,6 +254,17 @@ model LessonKeyword {
   keyword    Keyword @relation(fields: [keyword_id], references: [id])
 
   @@id([lesson_id, keyword_id])
+}
+
+model LessonObjective {
+  id            String @id @default(uuid())
+  lesson_id     String
+  lesson        Lesson @relation(fields: [lesson_id], references: [id])
+  objective     String
+  descriptions  Json
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 }
 
 // Existing ParentAccount model

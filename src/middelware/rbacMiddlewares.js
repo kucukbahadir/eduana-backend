@@ -27,10 +27,10 @@ function hasRoleMiddleware(requiredRoles) {
   const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
   
   return async (req, res, next) => {
-    if (!req.user || !req.user.id) return res.status(401).json({ message: "Unauthorized: No user found" });
+    if (!req.user || !req.user.userId) return res.status(401).json({ message: "Unauthorized: No user found" });
 
     try {
-      const user = await UserService.findById(req.user.id);
+      const user = await UserService.findById(req.user.userId);
       
       if (!user) return res.status(401).json({ message: "Unauthorized: User not found" });
       

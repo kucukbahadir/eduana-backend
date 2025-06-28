@@ -1,37 +1,51 @@
 const lessonService = require("../services/lessonService");
-const {getValidatedTeacher} = require("../utils/validateTeacher");
+const { getValidatedTeacher } = require("../utils/validateTeacher");
 
 class LessonController {
-    /**
-     * Retrieves the next scheduled lesson for an authenticated teacher.
-     *
-     * @param {Object} req - Express request object
-     * @param {Object} res - Express response object
-     * @returns {Object} - JSON response with lesson details or an error message
-     */
-    async getNextLesson(req, res) {
-        try {
-            const teacher = await getValidatedTeacher(req.params.teacherId, res);
-            if (!teacher) return;
+  /**
+   * Retrieves the next scheduled lesson for an authenticated teacher.
+   *
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   * @returns {Object} - JSON response with lesson details or an error message
+   */
+  async getNextLesson(req, res) {
+    try {
+      const teacher = await getValidatedTeacher(req.params.teacherId, res);
+      if (!teacher) return;
 
-            // Fetch next lesson from service
-            const lesson = await lessonService.getNextLesson(teacher.id);
+      // Fetch next lesson from service
+      const lesson = await lessonService.getNextLesson(teacher.id);
 
-            if (!lesson) {
-                return res.status(404).json({ message: "No upcoming lessons found" });
-            }
+      if (!lesson) {
+        return res.status(404).json({ message: "No upcoming lessons found" });
+      }
 
-            return res.status(200).json({
-                message: "Next lesson retrieved successfully",
-                lesson,
-            });
-
-        } catch (error) {
-            console.error("Error fetching next lesson:", error);
-            return res.status(500).json({ message: "Internal server error" });
-        }
+      return res.status(200).json({
+        message: "Next lesson retrieved successfully",
+        lesson,
+      });
+    } catch (error) {
+      console.error("Error fetching next lesson:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
-}
+  }
+  
+  async getLessonById(req, res) {
+    try {
+      const { lessonId } = req.params;
 
+      if (!lessonId) return res.status(400).json({ error: "Lesson ID not provided" });
+
+      const lesson = await lessonService.getLessonById(lessonId);
+      if (!lesson) return res.status(404).json({ error: "Lesson not found" });
+
+      return res.status(200).json(lesson);
+    } catch (err) {
+      console.error("Error fetching lesson:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+}
 
 module.exports = new LessonController();

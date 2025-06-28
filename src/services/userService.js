@@ -13,13 +13,6 @@ class UserService {
   async findById(userId) {
     return await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        student: true,
-        teacher: true,
-        parent: true,
-        coordinator: true,
-        admin: true,
-      },
     });
   }
 
