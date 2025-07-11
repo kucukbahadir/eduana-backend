@@ -122,6 +122,7 @@ class StudentController {
    */
   async getStudentNextKeywords(req, res) {
     try {
+      console.log("Fetching next keywords for student:", req.user.userId);
       if (!req.user || !req.user.userId) {
         return res.status(401).json({message: "User not authenticated or user ID is missing."});
       }

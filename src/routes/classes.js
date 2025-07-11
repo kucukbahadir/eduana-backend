@@ -7,5 +7,6 @@ const { hasRole } = require('../middelware/rbacMiddlewares');
 router.get('/:classId/students', authenticateUser, hasRole(["TEACHER", "STUDENT"]), (req, res) => ClassController.getStudentsByClassId(req, res));
 router.get('/:classId', /*authenticateUser,*/ (req, res) => ClassController.getClassById(req, res));
 router.get('/teacher/:teacherId', /*authenticateUser, hasRole("TEACHER"),*/ (req, res) => ClassController.getClassesByTeacherId(req, res));
+router.get('/teacher/:teacherId/categorized', /*authenticateUser, hasRole("TEACHER"),*/ (req, res) => ClassController.getCategorizedClassesByTeacherId(req, res));
 
 module.exports = router;

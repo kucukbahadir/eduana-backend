@@ -40,8 +40,8 @@ async function main() {
   // Create levels for curricula
   const levels = await createLevels(curricula);
 
-  // Create 7 classes - ONE FOR EACH DAY OF THE WEEK
-  const classes = await createClasses(7, curricula, locations);
+  // Create 14 classes - TWO FOR EACH DAY OF THE WEEK (7 days × 2 = 14)
+  const classes = await createClasses(14, curricula, locations);
 
   // Enroll students in classes
   await enrollStudentsInClasses(studentUsers, classes);
@@ -780,12 +780,13 @@ async function createClasses(count, curricula, locations) {
   console.log(`Creating ${count} classes...`);
   const classes = [];
 
-  // Ensure we don't create more classes than curricula available
-  const actualCount = Math.min(count, curricula.length);
+  // We need at least 14 classes to cover all 7 days with 2 classes each
+  // If we have fewer curricula, we'll repeat them
+  const actualCount = Math.max(count, 14);
 
   for (let i = 0; i < actualCount; i++) {
-    // Assign curricula sequentially to ensure variety
-    const curriculum = curricula[i];
+    // Cycle through curricula if we have fewer than needed
+    const curriculum = curricula[i % curricula.length];
     const location = faker.helpers.arrayElement(locations);
 
     // Create more meaningful class names based on curriculum
@@ -843,6 +844,30 @@ async function createSessions(classes, curricula, locations) {
 
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+  // Two different time slot sets to avoid overlap
+  const timeSlotSets = [
+    // Day slots (Set A) - 10 AM to 5 PM
+    [
+      { start: 10, end: 17 },  // 10:00-17:00 (10 AM - 5 PM)
+      { start: 9, end: 17 },   // 9:00-17:00 (9 AM - 5 PM)
+      { start: 10, end: 17 },  // 10:00-17:00 (repeat)
+      { start: 9, end: 17 },   // 9:00-17:00 (repeat)
+      { start: 10, end: 17 },  // 10:00-17:00 (repeat)
+      { start: 9, end: 17 },   // 9:00-17:00 (repeat)
+      { start: 10, end: 17 },  // 10:00-17:00 (repeat)
+    ],
+    // Evening slots (Set B) - 7 PM to 11 PM
+    [
+      { start: 19, end: 23 },  // 19:00-23:00 (7 PM - 11 PM)
+      { start: 19, end: 23 },  // 19:00-23:00 (repeat)
+      { start: 18, end: 23 },  // 18:00-23:00 (6 PM - 11 PM)
+      { start: 19, end: 23 },  // 19:00-23:00 (repeat)
+      { start: 18, end: 23 },  // 18:00-23:00 (repeat)
+      { start: 19, end: 23 },  // 19:00-23:00 (repeat)
+      { start: 19, end: 23 },  // 19:00-23:00 (repeat)
+    ]
+  ];
+
   for (let classIndex = 0; classIndex < classes.length; classIndex++) {
     const classObj = classes[classIndex];
     
@@ -864,23 +889,15 @@ async function createSessions(classes, curricula, locations) {
       continue;
     }
 
-    // Assign each class to a specific day of the week
-    const dayOfWeek = classIndex % 7;
+    // Assign each class to a specific day of the week (two classes per day)
+    const dayOfWeek = Math.floor(classIndex / 2) % 7;
+    const timeSlotSet = classIndex % 2; // Alternate between time slot sets
     
-    console.log(`Creating class ${classIndex + 1} (${curriculum.program_type}) for ${dayNames[dayOfWeek]}s - ${lessons.length} lessons`);
+    const timeSlotSetName = timeSlotSet === 0 ? 'A (Day - 10 AM to 5 PM)' : 'B (Evening - 7 PM to 11 PM)';
+    console.log(`Creating class ${classIndex + 1} (${curriculum.program_type}) for ${dayNames[dayOfWeek]}s - ${lessons.length} lessons - Time Set ${timeSlotSetName}`);
     
-    // Time slots
-    const timeSlots = [
-      { start: 9, end: 11 },   // 9:00-11:00
-      { start: 10, end: 12 },  // 10:00-12:00
-      { start: 13, end: 15 },  // 13:00-15:00
-      { start: 14, end: 16 },  // 14:00-16:00  
-      { start: 15, end: 17 },  // 15:00-17:00
-      { start: 16, end: 18 },  // 16:00-18:00
-      { start: 11, end: 13 },  // 11:00-13:00
-    ];
-    
-    const timeSlot = timeSlots[classIndex % timeSlots.length];
+    const timeSlots = timeSlotSets[timeSlotSet];
+    const timeSlot = timeSlots[Math.floor(classIndex / 2) % timeSlots.length];
 
     // Total weeks = exact number of lessons (no extra review weeks for now)
     const totalWeeks = lessons.length;
@@ -909,7 +926,10 @@ async function createSessions(classes, curricula, locations) {
       // Use lessons in exact order - no cycling, no duplicates
       const selectedLesson = lessons[week];
       
-      console.log(`  Week ${week + 1}: ${selectedLesson.title}`);
+      const startFormatted = timeSlot.start >= 12 ? `${timeSlot.start - 12 || 12} PM` : `${timeSlot.start} AM`;
+      const endFormatted = timeSlot.end >= 12 ? `${timeSlot.end - 12 || 12} PM` : `${timeSlot.end} AM`;
+      
+      console.log(`  Week ${week + 1}: ${selectedLesson.title} (${startFormatted} - ${endFormatted})`);
 
       // Location assignment
       let locationConnectObj = undefined;
