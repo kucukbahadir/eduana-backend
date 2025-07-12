@@ -26,16 +26,25 @@ function verifyJwtToken(token) {
  */
 async function authenticateUser(req, res, next) {
   const authenticationToken = req.headers["authorization"];
+  console.log("Authentication Token:", authenticationToken);
   if (!authenticationToken) return res.status(401).json({ message: "Unauthorized: No token provided" });
 
   const jwtToken = verifyJwtToken(authenticationToken.replace("Bearer ", ""));
+  console.log("Decoded JWT Token:", jwtToken);
   if (!jwtToken) return res.status(401).json({ message: "Unauthorized: Invalid token" });
+
 
   try {
     const user = await UserService.findById(jwtToken.userId);
     if (!user) return res.status(401).json({ message: "Unauthorized: User not found" });
 
-    req.user = user;
+    console.log("Authenticated User:", user);
+
+    req.user = {
+      userId: user.id,
+      name: "John Duty",
+    };
+    console.log("Request User Object:", req.user);
     next();
   } catch (error) {
     console.error("Prisma Database Error:", error.message);

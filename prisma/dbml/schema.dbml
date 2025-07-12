@@ -13,6 +13,7 @@ Table User {
   role Role [not null]
   location_id String
   location Location
+  parent_phone_number String
   enrollments Enrollment [not null]
   teachings Teaching [not null]
   attendances Attendance [not null]
@@ -25,6 +26,9 @@ Table User {
   children ParentAccount [not null]
   externalAccounts ExternalStudentAccount [not null]
   announcements Announcement [not null]
+  studentKeywordProgresses StudentKeywordProgress [not null]
+  studentGameLearningGoalLogs StudentGameLearningGoalLog [not null]
+  gameSessions GameSession [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
@@ -34,9 +38,10 @@ Table Curriculum {
   id String [pk]
   title String [not null]
   program_type String [not null]
-  difficulty_level String [not null]
+  difficulty_level Int [not null]
   classes Class [not null]
   lessons Lesson [not null]
+  levels Level [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
@@ -44,6 +49,7 @@ Table Curriculum {
 
 Table Class {
   id String [pk]
+  name String [not null]
   curriculum_id String
   curriculum Curriculum
   location_id String
@@ -63,10 +69,10 @@ Table Lesson {
   title String [not null]
   description String [not null]
   keywords LessonKeyword [not null]
+  learning_objectives LessonObjective [not null]
   sessions Session [not null]
-  presentationSlides PresentationSlides [not null]
-  kahoots Kahoot [not null]
-  sessionEvaluations SessionEvaluation [not null]
+  resources Resources [not null]
+  questions Question [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
@@ -86,6 +92,7 @@ Table Session {
   teachings Teaching [not null]
   attendances Attendance [not null]
   sessionEvaluations SessionEvaluation [not null]
+  gameSessions GameSession [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
@@ -117,7 +124,9 @@ Table Attendance {
   id String [pk]
   session_id String [not null]
   user_id String [not null]
-  status AttendanceStatus [not null]
+  present Boolean
+  late Boolean
+  excused Boolean
   note String
   timestamp DateTime [not null]
   session Session [not null]
@@ -125,21 +134,29 @@ Table Attendance {
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
+
+  indexes {
+    (session_id, user_id) [unique]
+  }
 }
 
 Table SessionEvaluation {
-  id String [pk]
   session_id String [not null]
-  lesson_id String [not null]
   user_id String [not null]
-  feedback String [not null]
-  score Int [not null]
+  participation_score Int [not null]
+  understanding_score Int [not null]
+  collaboration_score Int [not null]
+  problem_solving_score Int [not null]
+  task_completion_score Int [not null]
   session Session [not null]
-  lesson Lesson [not null]
   user User [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
+
+  indexes {
+    (session_id, user_id) [pk]
+  }
 }
 
 Table FinalEvaluation {
@@ -155,30 +172,24 @@ Table FinalEvaluation {
   deleted_at DateTime
 }
 
-Table PresentationSlides {
+Table Resources {
   id String [pk]
+  url String [not null]
+  type ResourceType [not null]
+  language String [not null]
   lesson_id String [not null]
   lesson Lesson [not null]
-  url String [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
-  deleted_at DateTime
-}
-
-Table Kahoot {
-  id String [pk]
-  lesson_id String [not null]
-  lesson Lesson [not null]
-  url String [not null]
-  created_at DateTime [default: `now()`, not null]
-  updated_at DateTime [not null]
-  deleted_at DateTime
 }
 
 Table Keyword {
   id String [pk]
-  value String [unique, not null]
+  name String [unique, not null]
+  description String
   lessons LessonKeyword [not null]
+  questions Question [not null]
+  studentKeywordProgresses StudentKeywordProgress [not null]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   deleted_at DateTime
@@ -193,6 +204,16 @@ Table LessonKeyword {
   indexes {
     (lesson_id, keyword_id) [pk]
   }
+}
+
+Table LessonObjective {
+  id String [pk]
+  lesson_id String [not null]
+  lesson Lesson [not null]
+  objective String [not null]
+  descriptions Json [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
 }
 
 Table ParentAccount {
@@ -278,6 +299,95 @@ Table Announcement {
   deleted_at DateTime
 }
 
+Table Level {
+  id String [pk]
+  curriculum_id String [not null]
+  curriculum Curriculum [not null]
+  level_number Int [not null]
+  title String
+  description String
+  questions Question [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table Question {
+  id String [pk]
+  lesson_id String [not null]
+  lesson Lesson [not null]
+  keyword_id String [not null]
+  keyword Keyword [not null]
+  level_id String [not null]
+  level Level [not null]
+  question_text String [not null]
+  answers Json [not null]
+  correct_answer_index Int [not null]
+  explanation_correct_answer String
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table Game {
+  id String [pk]
+  name String [unique, not null]
+  type String [not null]
+  description String
+  learningGoals GameLearningGoal [not null]
+  studentLearningGoalLogs StudentGameLearningGoalLog [not null]
+  gameSessions GameSession [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table GameLearningGoal {
+  id String [pk]
+  game_id String [not null]
+  game Game [not null]
+  goal_description String [not null]
+  studentLearningGoalLogs StudentGameLearningGoalLog [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table StudentKeywordProgress {
+  id String [pk]
+  student_id String [not null]
+  student User [not null]
+  keyword_id String [not null]
+  keyword Keyword [not null]
+  learning_progress Int [not null, default: 0]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table StudentGameLearningGoalLog {
+  id String [pk]
+  student_id String [not null]
+  student User [not null]
+  game_id String [not null]
+  game Game [not null]
+  goal_id String [not null]
+  learningGoal GameLearningGoal [not null]
+  achieved_at DateTime [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
+Table GameSession {
+  id String [pk]
+  student_id String [not null]
+  student User [not null]
+  game_id String [not null]
+  game Game [not null]
+  session_id String
+  session Session
+  started_at DateTime [not null]
+  ended_at DateTime
+  durationSeconds Int
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+}
+
 Enum Role {
   ADMIN
   TEACHER
@@ -286,17 +396,15 @@ Enum Role {
   COORDINATOR
 }
 
-Enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  EXCUSED
-  LATE
-}
-
 Enum ProficiencyLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
+}
+
+Enum ResourceType {
+  SLIDES
+  KAHOOT
 }
 
 Ref: User.location_id > Location.id
@@ -327,21 +435,19 @@ Ref: Attendance.user_id > User.id
 
 Ref: SessionEvaluation.session_id > Session.id
 
-Ref: SessionEvaluation.lesson_id > Lesson.id
-
 Ref: SessionEvaluation.user_id > User.id
 
 Ref: FinalEvaluation.user_id > User.id
 
 Ref: FinalEvaluation.evaluator_id > User.id
 
-Ref: PresentationSlides.lesson_id > Lesson.id
-
-Ref: Kahoot.lesson_id > Lesson.id
+Ref: Resources.lesson_id > Lesson.id
 
 Ref: LessonKeyword.lesson_id > Lesson.id
 
 Ref: LessonKeyword.keyword_id > Keyword.id
+
+Ref: LessonObjective.lesson_id > Lesson.id
 
 Ref: ParentAccount.parent_id > User.id
 
@@ -360,3 +466,29 @@ Ref: Announcement.class_id > Class.id
 Ref: Announcement.location_id > Location.id
 
 Ref: Announcement.author_id > User.id
+
+Ref: Level.curriculum_id > Curriculum.id
+
+Ref: Question.lesson_id > Lesson.id
+
+Ref: Question.keyword_id > Keyword.id
+
+Ref: Question.level_id > Level.id
+
+Ref: GameLearningGoal.game_id > Game.id
+
+Ref: StudentKeywordProgress.student_id > User.id
+
+Ref: StudentKeywordProgress.keyword_id > Keyword.id
+
+Ref: StudentGameLearningGoalLog.student_id > User.id
+
+Ref: StudentGameLearningGoalLog.game_id > Game.id
+
+Ref: StudentGameLearningGoalLog.goal_id > GameLearningGoal.id
+
+Ref: GameSession.student_id > User.id
+
+Ref: GameSession.game_id > Game.id
+
+Ref: GameSession.session_id > Session.id
